@@ -1,0 +1,55 @@
+
+# ArgoCD need this yaml file to deploy resources/services. 
+
+# Application 1: App
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: eks-app                 # Name of the Application; must be unique within Argo CD.
+  namespace: argocd             # Namespace where Argo CD is installed; this is where the Application resource lives.
+spec:
+  project: default              # The Argo CD project this Application belongs to. 'default' is the built-in project.
+  source:                       # The source of the desired state. Here we use a single source.
+    repoURL: https://github.com/eedunoh/Three-Tier-Web-Application-on-Amazon-EKS.git          # Git repository URL containing the application manifests.
+    targetRevision: main        # The branch, tag, or commit to track.
+    path: manifests             # Directory within the repository that contains the manifests (e.g deployment.yaml).
+  destination:                  # Where to deploy the application
+    server: https://kubernetes.default.svc                        # Kubernetes API server address. For in-cluster Argo CD, use the default service address.
+    namespace: default          # Target namespace in the cluster where resources will be created.
+  syncPolicy:                   # How Argo CD should keep the application in sync.
+    automated:                  # Enable automatic synchronization when Git changes.
+      prune: true               # Remove resources that exist in the cluster but no longer exist in Git.
+      selfHeal: true            # Automatically revert manual changes to match the Git source of truth.
+
+
+---
+
+
+# Application 2: Monitoring
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  sources:                              # Use multiple sources because we need a Helm chart and a values file from different repositories.
+    - repoURL: https://prometheus-community.github.io/helm-charts     # Source 1: The Helm chart from the Prometheus community repository.
+      chart: kube-prometheus-stack      # Name of the Helm chart.
+      targetRevision: 58.0.0            # Pin the chart version to ensure reproducibility.
+      helm:                             # Helm-specific options.
+        valueFiles:                     # This references a file from the second source (the one with ref: values). It basically says: "From the Git repository that I gave the alias values, go to monitoring/kube_prometheus_values.yaml."
+          - $values/monitoring/kube_prometheus_values.yaml
+    - repoURL: https://github.com/eedunoh/Three-Tier-Web-Application-on-Amazon-EKS.git            # Source 2: Our Git repository containing the custom Helm values file.
+      targetRevision: main              # Branch or tag to track in this Git repo.
+      ref: values                       # An arbitrary name (ref) assigned to this source. It is used in the first source's $values path.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+
+

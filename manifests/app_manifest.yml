@@ -1,0 +1,67 @@
+# This yaml file will define the deploymnent and service manifests of the eks-app
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+
+      # Deployment manages Pods with the label app=eks-app
+      app: eks-app              
+  template:
+    metadata:
+      labels:
+
+        # Every Pod created by this Deployment gets app=eks-app
+        app: eks-app            
+    spec:
+      nodeSelector:
+
+        # Pod MUST run on a node with role=app_worker
+        role: app_worker        
+      tolerations: 
+        - key: "dedicated"
+          operator: "Equal"
+          value: "app_worker"
+
+          # Pod is ALLOWED to run on a node with this taint
+          effect: "NoSchedule"  
+      containers:
+      - name: my-webapp
+        image: {APP_IMAGE}
+        resources:
+          # limits:
+          #   memory: "128Mi"
+          #   cpu: "500m"
+        ports:
+        - containerPort: 80
+
+
+
+--- 
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: eks-app-svc
+spec:
+  selector:
+
+    # Send traffic to Pods with label: app=eks-app
+    app: eks-app                
+  ports:
+    - protocol: TCP
+
+      # Port exposed by the Service
+      port: 80        
+
+      # Port on the application Pod          
+      targetPort: 80       
+
+  # Internal Kubernetes access only. Loadbalacer exposes the service to the outside world     
+  type: ClusterIP               
