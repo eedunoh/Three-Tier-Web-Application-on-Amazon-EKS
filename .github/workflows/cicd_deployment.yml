@@ -71,7 +71,7 @@ jobs:
       - name: Build Docker Image
         if: github.event.inputs.destroy != 'true'
         run: |
-          docker build -t $APP_IMAGE -f ./app/dockerfile .
+          docker build -t $APP_IMAGE -f ./web_app/dockerfile .
    
 
       # Stage 8: Initialize Terraform
