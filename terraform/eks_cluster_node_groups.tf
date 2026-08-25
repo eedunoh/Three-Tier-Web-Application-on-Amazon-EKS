@@ -51,7 +51,7 @@ resource "aws_eks_cluster" "eks_cluster" {
 # This is a general purpose node for clutser tools and monitoring like prometheus and grafana
 resource "aws_eks_node_group" "general_and_monitoring" {
   cluster_name = aws_eks_cluster.eks_cluster.name
-  node_group_name = "general and monitoring node"
+  node_group_name = "general-and-monitoring-node"
 
   # Notice we used node iam_role here rather than instace profile, this is because when using AWS managed EKS, AWS handles the instance profile generation from the node iam role
   node_role_arn = aws_iam_role.eks_node_role.arn
@@ -112,7 +112,7 @@ resource "aws_eks_node_group" "general_and_monitoring" {
 # This node group is only for the app
 resource "aws_eks_node_group" "app_worker" {
   cluster_name = aws_eks_cluster.eks_cluster.name
-  node_group_name = "app worker node"
+  node_group_name = "app-worker-node"
 
   # Notice we used node iam_role here rather than instace profile, this is because when using AWS managed EKS, AWS handles the instance profile generation from the node iam role
   node_role_arn = aws_iam_role.eks_node_role.arn
