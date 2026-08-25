@@ -246,7 +246,7 @@ resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
 
 
 output "cluster_iam_role" {
-  value = aws_iam_role.web_app_eks_cluster_role.name
+  value = aws_iam_role.eks_cluster_role.name
 }
 
 output "node_iam_role" {
