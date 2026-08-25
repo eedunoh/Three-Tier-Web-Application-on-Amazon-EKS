@@ -1,4 +1,4 @@
-resource "aws_dynamodb_table" "artisian_app_requests" {
+resource "aws_dynamodb_table" "eks_platform_requests" {
   name         = var.dynamodb_name
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "username"

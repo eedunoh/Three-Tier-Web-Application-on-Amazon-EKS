@@ -68,25 +68,20 @@ variable "user_pool_client_name" {
 
 variable "s3_bucket_name" {
     default = "eks-platform-env-s3-bucket"
-    description = "s3 bucket for my artisian app"
+    description = "s3 bucket for my EKS platform"
     type = string
 }
 
 
 variable "dynamodb_name" {
     default = "eks_platform_requests"
-    description = "artisian app dynamodb storage name"
+    description = "EKS platform dynamodb storage name"
     type = string
 }
 
-variable "lambda_function_name" {
-    default = "eks_platform_lambda_function"
-    description = "lambda function of the artisian app"
-    type = string
-}
 
 variable "sns_name" {
     default = "eks_platform_sns"
-    description = "sns notification for artisian app"
+    description = "sns notification for EKS platform"
     type = string
 }

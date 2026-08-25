@@ -45,7 +45,7 @@ resource "aws_iam_role" "eks_cluster_role" {
 
 resource "aws_iam_role_policy_attachment" "cluster_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role = aws_iam_role.web_app_eks_cluster_role.name
+  role = aws_iam_role.eks_cluster_role.name
 }
 
 
@@ -57,7 +57,7 @@ resource "aws_iam_role_policy_attachment" "cluster_role_policy" {
 
 resource "aws_iam_role_policy_attachment" "cluster_vpc_controller" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  role = aws_iam_role.web_app_eks_cluster_role.name
+  role = aws_iam_role.eks_cluster_role.name
 }
 
 
@@ -116,11 +116,11 @@ resource "aws_iam_policy" "ssm_dynamodb_and_s3_access" {
 
       ],
     "Resource": [
-        "${aws_s3_bucket.artisian_app_s3_bucket.arn}",
-        "${aws_s3_bucket.artisian_app_s3_bucket.arn}/*",
+        "${aws_s3_bucket.eks_platform_s3_bucket.arn}",
+        "${aws_s3_bucket.eks_platform_s3_bucket.arn}/*",
 
-        "${aws_dynamodb_table.artisian_app_requests.arn}",
-        "${aws_dynamodb_table.artisian_app_requests.arn}/*"
+        "${aws_dynamodb_table.eks_platform_requests.arn}",
+        "${aws_dynamodb_table.eks_platform_requests.arn}/*"
     ]
     }
 
