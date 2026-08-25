@@ -94,7 +94,10 @@ resource "helm_release" "cluster_autoscaler" {
   ]
 
   depends_on = [
-    aws_eks_pod_identity_association.cluster_autoscaler
+    aws_eks_pod_identity_association.cluster_autoscaler,
+    aws_eks_cluster.eks_cluster,
+     aws_eks_node_group.general_and_monitoring,
+     aws_eks_node_group.app_worker
   ]
 }
 
