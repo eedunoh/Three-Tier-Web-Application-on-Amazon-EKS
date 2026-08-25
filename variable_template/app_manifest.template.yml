@@ -31,7 +31,7 @@ spec:
           effect: "NoSchedule"  
       containers:
       - name: my-webapp
-        image: {APP_IMAGE}
+        image: "${APP_IMAGE}"
         resources:
           # limits:
           #   memory: "128Mi"
