@@ -58,6 +58,27 @@ resource "helm_release" "cluster_autoscaler" {
       value = aws_eks_node_group.general_and_monitoring.node_group_name
     },
 
+    # Configure tolerations to match with node taints
+    {
+      name  = "tolerations[0].key"
+      value = "dedicated"
+    },
+
+    {
+      name  = "tolerations[0].operator"
+      value = "Equal"
+    },
+
+    {
+      name  = "tolerations[0].value"
+      value = "general_and_monitoring"
+    },
+
+    {
+      name  = "tolerations[0].effect"
+      value = "NoSchedule"
+    },
+
     # AWS region.
     {
       name  = "awsRegion"
