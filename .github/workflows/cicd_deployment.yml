@@ -176,13 +176,27 @@ jobs:
           envsubst < variable_template/kube_prometheus_values.template.yml > monitoring/kube_prometheus_values.yml
 
 
+
       # Commit the rendered files so ArgoCD detects the change and syncs
+      # These set the Git author and committer identity for the commands in this step.
+      # Without them, Git may not know who is making the commit, causing the Author identity unknown error. Using the GitHub Actions bot identity is a standard practice for automated commits.
+
+      # git diff --cached --quiet checks whether there are any staged changes compared to the last commit. It is a guard that prevents errors from an empty commit
+
+      # This step safely commits and pushes the rendered manifest files only when they have actually changed, using the GitHub Actions bot identity and the env block ensures Git knows the author/committer identity.
       - name: Commit and push rendered files
         if: github.event.inputs.destroy != 'true'
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
           git add manifests/app_manifest.yml manifests/ingress.yml monitoring/kube_prometheus_values.yml
-          git commit -m "Update rendered manifests [skip ci]"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "Update rendered manifests [skip ci]"
+            git push
+          fi
 
 
 
