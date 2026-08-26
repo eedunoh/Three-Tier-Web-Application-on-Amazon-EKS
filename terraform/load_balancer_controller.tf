@@ -47,6 +47,11 @@ resource "helm_release" "lb_controller" {
 
         clusterName = aws_eks_cluster.eks_cluster.name
 
+        # The AWS Load Balancer Controller pod crashed because it timed out trying to fetch the VPC ID from EC2 instance metadata. 
+        # The controller doesn’t automatically know the VPC ID from the EKS cluster. It normally fetches the VPC ID by querying the EC2 instance metadata of the node it runs on. 
+        # I'll explicitly set vpcId in the Helm release
+        vpcId = aws_vpc.main.id
+
         # IMPORTANT: Use a load balancer controller version compatible with your EKS. Check compatible versions here: helm search repo eks/aws-load-balancer-controller --versions
         image = {
           tag = "v2.13.4"
