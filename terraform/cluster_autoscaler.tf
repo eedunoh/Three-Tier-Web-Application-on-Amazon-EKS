@@ -55,16 +55,6 @@ resource "helm_release" "cluster_autoscaler" {
           role = "general_and_monitoring"
         }
 
-        # Configure Helm tolerations to match with node taints
-        tolerations = [
-          {
-            key      = "dedicated"
-            operator = "Equal"
-            value    = "general_and_monitoring"
-            effect   = "NoSchedule"
-          }
-        ]
-
         awsRegion = var.region
 
         # Helm creates the ServiceAccount. This MUST match the ServiceAccount used in aws_eks_pod_identity_association above.

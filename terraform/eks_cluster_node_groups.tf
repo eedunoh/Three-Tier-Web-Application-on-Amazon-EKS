@@ -95,14 +95,6 @@ resource "aws_eks_node_group" "general_and_monitoring" {
     role = "general_and_monitoring"
   }
 
-  # Taints prevent workloads that don't explicitly tolerate the node from being scheduled here. Basically, keep workloads that don't belong here out.
-  # The 'key' tells Kubernetes what kind of taint/restriction this is, while the 'value' tells it which specific value/category it represents
-  taint {
-    key = "dedicated"
-    value = "general_and_monitoring"
-    effect = "NO_SCHEDULE"
-  }
-
 }
 
 
@@ -149,13 +141,6 @@ resource "aws_eks_node_group" "app_worker" {
     role = "app_worker"
   }
 
-  # Taints prevent workloads that don't explicitly tolerate the node from being scheduled here. Basically, keep workloads that don't belong here out.
-  # The 'key' tells Kubernetes what kind of taint/restriction this is, while the 'value' tells it which specific value/category it represents
-  taint {
-    key = "dedicated"
-    value = "app_worker"
-    effect = "NO_SCHEDULE"
-  }
 }
 
 

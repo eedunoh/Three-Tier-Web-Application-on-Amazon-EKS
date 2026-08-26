@@ -22,13 +22,7 @@ spec:
 
         # Pod MUST run on a node with role=app_worker
         role: app_worker        
-      tolerations: 
-        - key: "dedicated"
-          operator: "Equal"
-          value: "app_worker"
-
-          # Pod is ALLOWED to run on a node with this taint
-          effect: "NoSchedule"  
+        
       containers:
       - name: my-webapp
         image: "${APP_IMAGE}"
