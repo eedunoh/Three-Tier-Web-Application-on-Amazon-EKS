@@ -45,7 +45,7 @@ spec:
       ref: values                       # An arbitrary name (ref) assigned to this source. It is used in the first source's $values path.
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: default
   syncPolicy:
     automated:
       prune: true
