@@ -37,82 +37,56 @@ resource "helm_release" "cluster_autoscaler" {
   version    = "9.46.0" 
   namespace  = "kube-system"
 
-  set = [
+  values = [
+      yamlencode({
 
-    # IMPORTANT: Use a Cluster Autoscaler version compatible with your EKS Kubernetes version. 
-    { 
-      name = "image.tag" 
-      value = "v1.35.0" 
-    },
+        # IMPORTANT: Use a Cluster Autoscaler version compatible with your EKS Kubernetes version. 
+        image = {
+          tag = "v1.35.0"
+        }
 
-    # Tell CA which EKS cluster it manages.
-    {
-      name  = "autoDiscovery.clusterName"
-      value = aws_eks_cluster.eks_cluster.name
-    },
+        autoDiscovery = {
+          clusterName = aws_eks_cluster.eks_cluster.name
+        }
 
-    # The node I want to place the Cluster Autoscaler on.
-    # Important: this does not mean Cluster Autoscaler can only scale the monitoring node group. The CA Pod can run on the monitoring node while managing/scaling your app and monitoring node groups through AWS APIs.
-    {
-      name  = "nodeSelector.role"
-      value = aws_eks_node_group.general_and_monitoring.node_group_name
-    },
+      # The node I want to place the Cluster Autoscaler on. Here you reference the node label role.
+      # Important: this does not mean Cluster Autoscaler can only scale the monitoring node group. The CA Pod can run on the monitoring node while managing/scaling your app and monitoring node groups through AWS APIs.
+        nodeSelector = {
+          role = "general_and_monitoring"
+        }
 
-    # Configure tolerations to match with node taints
-    {
-      name  = "tolerations[0].key"
-      value = "dedicated"
-    },
+        # Configure Helm tolerations to match with node taints
+        tolerations = [
+          {
+            key      = "dedicated"
+            operator = "Equal"
+            value    = "general_and_monitoring"
+            effect   = "NoSchedule"
+          }
+        ]
 
-    {
-      name  = "tolerations[0].operator"
-      value = "Equal"
-    },
+        awsRegion = var.region
 
-    {
-      name  = "tolerations[0].value"
-      value = "general_and_monitoring"
-    },
+        # Helm creates the ServiceAccount. This MUST match the ServiceAccount used in aws_eks_pod_identity_association above.
+        rbac = {
+          serviceAccount = {
+            create = true
+            name   = "cluster-autoscaler"
+          }
+        }
 
-    {
-      name  = "tolerations[0].effect"
-      value = "NoSchedule"
-    },
+        # Optional tuning.
+        extraArgs = {
+          balance-similar-node-groups  = "true"
 
-    # AWS region.
-    {
-      name  = "awsRegion"
-      value = var.region
-    },
+          # Allows Cluster Autoscaler to consider nodes running system Pods for scale-down
+          skip-nodes-with-system-pods  = "false"
 
-    # Helm creates the ServiceAccount. This MUST match the ServiceAccount used in aws_eks_pod_identity_association above.
-    {
-      name  = "rbac.serviceAccount.create"
-      value = "true"
-    },
-    {
-      name  = "rbac.serviceAccount.name"
-      value = "cluster-autoscaler"
-    },
-
-    # Optional tuning.
-    {
-      name  = "extraArgs.balance-similar-node-groups"
-      value = "true"
-    },
-
-    # Allows Cluster Autoscaler to consider nodes running system Pods for scale-down.
-    {
-      name  = "extraArgs.skip-nodes-with-system-pods"
-      value = "false"
-    },
-
-      # A node must be unneeded for 10 minutes before Cluster Autoscaler considers removing it.
-    {
-      name  = "extraArgs.scale-down-unneeded-time"
-      value = "10m"
-    }
-  ]
+          # A node must be unneeded for 10 minutes before Cluster Autoscaler considers removing it.
+          scale-down-unneeded-time     = "10m"
+        }
+      })
+    ]
 
   depends_on = [
     aws_eks_pod_identity_association.cluster_autoscaler,
