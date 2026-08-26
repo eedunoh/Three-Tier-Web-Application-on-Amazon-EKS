@@ -4,11 +4,6 @@
 
 # The Load balancer controller will be deployed into a pod. Its best practice to create a unique role for it. This will enforce least privilege. 
 
-# Install the EKS Pod Identity Agent. This allows EKS Pods to assume IAM roles through Pod Identity.
-resource "aws_eks_addon" "controller_pod_identity_agent" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "controller-eks-pod-identity-agent"
-}
 
 
 # Terraform creates the eks pod identity association for the load balancer controller. Pod Identity will attach the iam role and permission to the pod itself and not the node the pod is scheduled on.
@@ -22,7 +17,9 @@ resource "aws_eks_pod_identity_association" "lb_controller" {
   role_arn = aws_iam_role.alb_controller.arn
 
   depends_on = [
-    aws_eks_addon.controller_pod_identity_agent,
+
+    # The EKS Pod Identity Agent was already installed in the cluster_autoscaler terraform script. So I will just reference it here.
+    aws_eks_addon.pod_identity_agent,
     aws_iam_role_policy_attachment.lb_controller
   ]
 }
