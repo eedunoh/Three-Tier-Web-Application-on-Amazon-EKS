@@ -4,6 +4,8 @@ resource "aws_dynamodb_table" "eks_platform_requests" {
   hash_key     = "username"
   range_key = "request_date"
 
+  deletion_protection_enabled = false
+
   attribute {
     name = "username"
     type = "S"

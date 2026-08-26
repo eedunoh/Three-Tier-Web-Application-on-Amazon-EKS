@@ -2,6 +2,8 @@
 
 # In this project I will use AWS-managed EKS and Kubernetes Cluster Autoscaler. 
 
+# I wont be using taint and tolerations because I encountered an issue where custom taint and tolerations affected the functioning of the cluster's CoreDNS.
+
 # Create the EKS Cluster
 resource "aws_eks_cluster" "eks_cluster" {
   name = "eks_cluster"

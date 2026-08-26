@@ -251,7 +251,7 @@ jobs:
       - name: Register Argo CD Applications
         if: github.event.inputs.destroy != 'true'
         run: |
-          kubectl apply -f argoCD/argocd_application.yaml
+          kubectl apply -f argocd/argocd_application.yml
 
 
 
