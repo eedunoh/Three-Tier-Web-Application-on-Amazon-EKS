@@ -5,9 +5,16 @@ terraform {
       version = "~> 5.0"
     }
 
+    # Allows Terraform to manage Helm releases (like the cluster autoscaler and load balancer controller) as Terraform resources.
     helm = {
       source  = "hashicorp/helm"
       version = "~> 3.2.0"
+    }
+
+    # Enables Terraform to fetch data from HTTP(S) URLs. In my setup, it’s used to retrieve the AWS Load Balancer Controller IAM policy JSON from GitHub, so I don’t have to store it locally.
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
     }
   }
 }

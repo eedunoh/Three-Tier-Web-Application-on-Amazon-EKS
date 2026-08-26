@@ -15,6 +15,8 @@ resource "aws_eks_addon" "pod_identity_agent" {
 resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
   cluster_name    = aws_eks_cluster.eks_cluster.name
   namespace       = "kube-system"
+
+  # must match Helm serviceAccount.name
   service_account = "cluster-autoscaler"
 
   role_arn = aws_iam_role.cluster_autoscaler.arn
@@ -33,7 +35,11 @@ resource "helm_release" "cluster_autoscaler" {
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
 
-  # Example stable chart version (pins the installation)
+  # Stable chart version (pins the installation)
+  # Each Helm chart is independently versioned by its own maintainers. The version numbers have nothing to do with the software they deploy or each other.
+  # Think of it like: 
+  # Cluster Autoscaler chart: maintained by the Kubernetes autoscaler team, they happen to use versions like 9.x. 
+  # AWS Load Balancer Controller chart: maintained by AWS EKS team, they use versions like 1.x.
   version    = "9.46.0" 
   namespace  = "kube-system"
 

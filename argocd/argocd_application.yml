@@ -39,7 +39,7 @@ spec:
       targetRevision: 58.0.0            # Pin the chart version to ensure reproducibility.
       helm:                             # Helm-specific options.
         valueFiles:                     # This references a file from the second source (the one with ref: values). It basically says: "From the Git repository that I gave the alias values, go to monitoring/kube_prometheus_values.yaml."
-          - $values/monitoring/kube_prometheus_values.yaml
+          - $values/monitoring/kube_prometheus_values.yml
     - repoURL: https://github.com/eedunoh/Three-Tier-Web-Application-on-Amazon-EKS.git            # Source 2: Our Git repository containing the custom Helm values file.
       targetRevision: main              # Branch or tag to track in this Git repo.
       ref: values                       # An arbitrary name (ref) assigned to this source. It is used in the first source's $values path.

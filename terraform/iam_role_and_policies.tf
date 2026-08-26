@@ -244,6 +244,56 @@ resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+# The ALB controller will be deployed on a pod. Its best practice need to create a unique role for it. This will enforce least privilege. 
+
+# IAM role used ONLY by the ALB Controller Pod
+resource "aws_iam_role" "alb_controller" {
+  name = "AlbControllerRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Principal = {Service = "pods.eks.amazonaws.com"}
+
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
+      }
+    ]
+  })
+}
+
+
+# I added a provider in te main.tf file to allow terraform access http
+# Note the version here matches the eks controller image tag (version) as stated in the load_balacer_controller.tf file
+data "http" "aws_lb_controller_policy" {
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.13.4/docs/install/iam_policy.json"
+}
+
+
+# This is the load balancer policy. I defined it here so I can attach it to the iam role
+resource "aws_iam_policy" "aws_lb_controller" {
+  name        = "AWSLoadBalancerControllerIAMPolicy"
+  description = "Policy for AWS Load Balancer Controller"
+
+  policy = data.http.aws_lb_controller_policy.body
+}
+
+
+resource "aws_iam_role_policy_attachment" "lb_controller" {
+  role = aws_iam_role.alb_controller.name
+  policy_arn = aws_iam_policy.aws_lb_controller.arn
+  depends_on = [ aws_iam_policy.aws_lb_controller ]
+}
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 output "cluster_iam_role" {
   value = aws_iam_role.eks_cluster_role.name
@@ -256,4 +306,8 @@ output "node_iam_role" {
 
 output "cluster_autoscaler_iam_role" {
   value = aws_iam_role.cluster_autoscaler.name
+}
+
+output "aws_load_balancer_controller" {
+  value = aws_iam_role.alb_controller.name
 }
