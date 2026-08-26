@@ -1,13 +1,14 @@
 # use a slim Python base image to reduce image size.
-
 FROM python:3.9-slim
 
 WORKDIR /app
 
 RUN pip install --no-cache-dir Flask boto3 python-dotenv flask-session
 
-COPY . .
+# Copy files from the build context's web_app directory into /app in the image
+COPY web_app/ /app/
 
-ENV FLASK_APP=app.py
+# Set Flask to look for app.py in the current working directory (/app)
+ENV FLASK_APP=/app/app.py
 
 CMD ["flask", "run", "--host=0.0.0.0", "--port=80"]
