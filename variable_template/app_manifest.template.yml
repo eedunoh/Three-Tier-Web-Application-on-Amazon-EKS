@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: myapp
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
 
@@ -21,15 +21,11 @@ spec:
       nodeSelector:
 
         # Pod MUST run on a node with role=app_worker
-        role: app_worker        
+        role: app_worker       
         
       containers:
       - name: my-webapp
         image: "${APP_IMAGE}"
-        resources:
-          # limits:
-          #   memory: "128Mi"
-          #   cpu: "500m"
         ports:
         - containerPort: 80
 
