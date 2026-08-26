@@ -1,5 +1,14 @@
 name: EKS platform ci/cd pipeline
 
+
+# To update the Kubernetes manifests, my workflow uses envsubst to replace ${VAR} placeholders in template files with real values (like Cognito secrets, image names, tags). 
+# This produces the final rendered YAML files: app_manifest.yml, ingress.yml, and kube_prometheus_values.yml. The workflow then commits and pushes these rendered files to the manifests/ and monitoring/ folders that Argo CD watches. 
+# The push fails because the default GITHUB_TOKEN is read-only for repository contents. Adding permissions: contents: write grants the bot the write access needed to push the rendered manifests.
+permissions:
+  contents: write
+
+
+
 # stage 1: Trigger
 # Every push to main triggers the workflow. We can also use pull_request or schedule: - cron
 on:
