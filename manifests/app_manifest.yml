@@ -25,7 +25,7 @@ spec:
         
       containers:
       - name: my-webapp
-        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:4e9c6b5738a755aaf4c0220ef4f1c797cb8d9177"
+        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:572c90fa472b75ba37c8f179357a0fd332c5653c"
         resources:
           # limits:
           #   memory: "128Mi"
