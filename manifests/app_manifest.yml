@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: myapp
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
 
@@ -21,15 +21,11 @@ spec:
       nodeSelector:
 
         # Pod MUST run on a node with role=app_worker
-        role: app_worker        
+        role: app_worker       
         
       containers:
       - name: my-webapp
-        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:0a40b6eac2488f079ba1725459b70640966f36ac"
-        resources:
-          # limits:
-          #   memory: "128Mi"
-          #   cpu: "500m"
+        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:057dd3338f45d8e2e6cc63fd65eb871da24efd80"
         ports:
         - containerPort: 80
 

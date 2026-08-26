@@ -30,7 +30,7 @@ grafana:
   nodeSelector:
 
     # Schedule only on monitoring nodes
-    role: "general_and_monitoring"                               
+    role: general_and_monitoring                              
   grafana.ini:
     server:
 
@@ -95,7 +95,7 @@ prometheus:
     nodeSelector:
       
       # Schedule only on monitoring nodes
-      role: "general_and_monitoring"         
+      role: general_and_monitoring         
 
     # Keep metrics data for 15 days                    
     retention: 15d                                      
