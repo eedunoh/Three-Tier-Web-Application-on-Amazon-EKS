@@ -31,7 +31,7 @@ spec:
           effect: "NoSchedule"  
       containers:
       - name: my-webapp
-        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:f33c0fa7a876b81932c6b1646066ef64111fc5f6"
+        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:77f777ef20109f5ff8407448b88950ac0e50b162"
         resources:
           # limits:
           #   memory: "128Mi"
