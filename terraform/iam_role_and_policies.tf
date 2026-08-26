@@ -281,7 +281,7 @@ resource "aws_iam_policy" "aws_lb_controller" {
   name        = "AWSLoadBalancerControllerIAMPolicy"
   description = "Policy for AWS Load Balancer Controller"
 
-  policy = data.http.aws_lb_controller_policy.body
+  policy = data.http.aws_lb_controller_policy.response_body
 }
 
 
