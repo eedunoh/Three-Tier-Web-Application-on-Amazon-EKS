@@ -71,13 +71,13 @@ grafana:
       # Cognito's public signing keys. It downloads the public cryptographic keys from your specific Amazon Cognito User Pool.
       # Every time a user accesses Grafana, Grafana uses these public keys to mathematically verify the signature on the X-Amzn-Oidc-Accesstoken. 
       # It proves that the token was genuinely minted by your Cognito instance and hasn't been modified or faked by someone trying to hack into your system.
-      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_IQkouw0kF/.well-known/jwks.json"
+      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_kwbPlNHDT/.well-known/jwks.json"
 
 
       # Cognito issuer. It explicitly tells Grafana: "Only accept tokens where the iss claim inside the payload matches this exact URL string."
       # This prevents Cross-Pool Impersonation. If a malicious actor creates their own free AWS Cognito User Pool in another account, generates a valid token from their pool, and passes it to your ALB/Grafana, 
       # the signature might technically pass validation checks if they point to public endpoints. However, because the iss (issuer) field inside their token won't match your expected_issuer URL, Grafana will immediately reject it.
-      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_IQkouw0kF"
+      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_kwbPlNHDT"
 
 
 prometheus:
