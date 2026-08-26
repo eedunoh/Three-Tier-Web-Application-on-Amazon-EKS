@@ -1,0 +1,58 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: eks-app-ingress
+
+  annotations:
+    # Tell AWS Load Balancer Controller to create/manage an ALB
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+    # HTTPS
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-north-1:337909745504:certificate/dd8f1a38-5849-467a-aba7-cfa4245cc903
+
+    # Cognito authentication
+    # Tells the AWS Load Balancer Controller: “Configure Cognito authentication on the ALB”. So the ALB, not Flask or Grafana, becomes the authentication gate.
+    alb.ingress.kubernetes.io/auth-type: cognito
+
+    # This tells the ALB which Cognito User Pool and application client to use. “ALB, use THIS Cognito User Pool, using THIS client, through THIS Cognito domain.”
+    alb.ingress.kubernetes.io/auth-idp-cognito: >
+      {
+        "userPoolARN":"arn:aws:cognito-idp:eu-north-1:337909745504:userpool/eu-north-1_piKEa7JNX",
+        "userPoolClientID":"3l0qn622amj7e5oh2rhpchhb72",
+        "userPoolDomain":"eks-app"
+      }
+
+    # “If the user doesn't have a valid authentication session, send them to Cognito to log in.”
+    alb.ingress.kubernetes.io/auth-on-unauthenticated-request: authenticate
+
+    # This tells Cognito what OAuth/OIDC information the ALB should request. openid: tells Cognito this is an OpenID Connect authentication request. email: requests the user's email claim.
+    alb.ingress.kubernetes.io/auth-scope: "openid email"
+
+spec:
+  ingressClassName: alb
+
+  rules:
+    - host: www.builtbyedunoh.com
+      http:
+        paths:
+
+          # Application
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eks-app-svc
+                port:
+                  number: 80
+
+          # Grafana
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: monitoring-grafana
+                port:
+                  number: 80

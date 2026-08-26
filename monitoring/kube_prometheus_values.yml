@@ -1,0 +1,106 @@
+
+# The name values.yaml comes from Helm.
+# The Helm chart contains the actual templates for creating the Deployments, Services, ConfigMaps, Prometheus resources, Grafana resources, etc. 
+# The values.yaml file supplies the configuration values that those templates use. The official kube-prometheus-stack chart explicitly describes its values.yaml as values passed into templates
+# I'm configuring a pre-built application rather than manually defining every Kubernetes object like Deployment, Service, ConfigMap etc.
+
+
+# By default, the Kubernetes Service name created by the kube-prometheus-stack Helm chart follows the pattern [RELEASE-NAME]-grafana.
+# My Helm command uses monitoring as the RELEASE-NAME: helm upgrade --install monitoring prometheus-community ...
+# Therefore Helm creates the Grafana Service as 'monitoring-grafana'.
+# My HTTPRoute uses backendRef: monitoring-grafana:80 because it is referring to that Helm-created Service.
+
+
+grafana:
+
+  # Sets Grafana admin login password
+  adminPassword: ""      
+
+  # username: "admin"
+  service:
+
+    # The Service is reachable internally within the Kubernetes cluster. This is actually perfect for my architecture because my ALB/Gateway can sit in front of it. Other types are: NodePort (Exposes a port on every Kubernetes node) and LoadBalancer (Requests an external load balancer)
+    type: ClusterIP
+
+    # the port exposed by the Service                                      
+    port: 80          
+
+    # the port Grafana container listens on                                   
+    targetPort: 3000                                     
+  nodeSelector:
+
+    # Schedule only on monitoring nodes
+    role: monitoring-node                               
+  grafana.ini:
+    server:
+
+      # This is Grafana's public URL. It is the standard Grafana pattern when Grafana is served under a sub-path. Grafana needs to know that users reach it at /grafana, rather than at /. 
+      # The %(... )s parts are Grafana variables that Grafana substitutes at runtime. So conceptually: http://builtbyedunoh.com:80/grafana
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"     
+
+      # serve_from_sub_path: true tells Grafana to actually serve its application from /grafana. It is required for /grafana path because I'm putting Grafana behind my domain: http://builtbyedunoh.com/grafana
+      serve_from_sub_path: true
+
+    auth:
+      disable_login_form: true
+
+    auth.jwt:
+      enabled: true
+
+      # ALB sends this header after Cognito authentication. 
+      # The X-Amzn-Oidc-Accesstoken header is the raw access token issued directly by Amazon Cognito, passed through by the ALB without alteration.
+      # By targeting this specific header instead of X-Amzn-Oidc-Data, you can bypass the ALB signature verification problem completely. Because this is the original Cognito-signed JWT, you can point Grafana's jwk_set_url straight to Cognito's static JWKS endpoint.
+      header_name: X-Amzn-Oidc-Accesstoken
+
+      # These claims exist in the Cognito access token
+      username_claim: cognito:username
+      email_claim: email
+
+      auto_sign_up: true
+
+
+      # This language is called JMESPath (pronounced "James Path"). It is a query and transformation language designed specifically for JSON data, and it is natively used by Grafana (and the AWS CLI) to filter, parse, and reshape complex JSON token payloads.
+      # If 'cognito:groups' contains 'admin', assign them the 'Admin' role.
+      # If 'cognito:groups' contains 'users' (or anything else), it outputs nothing.
+      role_attribute_path: "(\"cognito:groups\" | contains([*], 'admin') && 'Admin' || 'None')"
+      
+      # Enforce strict checking. Because 'users' evaluated to 'None' (an invalid/null baseline role), Grafana intercepts the session and completely denies them access to the application.
+      role_attribute_strict: true
+
+
+      # Cognito's public signing keys. It downloads the public cryptographic keys from your specific Amazon Cognito User Pool.
+      # Every time a user accesses Grafana, Grafana uses these public keys to mathematically verify the signature on the X-Amzn-Oidc-Accesstoken. 
+      # It proves that the token was genuinely minted by your Cognito instance and hasn't been modified or faked by someone trying to hack into your system.
+      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_piKEa7JNX/.well-known/jwks.json"
+
+
+      # Cognito issuer. It explicitly tells Grafana: "Only accept tokens where the iss claim inside the payload matches this exact URL string."
+      # This prevents Cross-Pool Impersonation. If a malicious actor creates their own free AWS Cognito User Pool in another account, generates a valid token from their pool, and passes it to your ALB/Grafana, 
+      # the signature might technically pass validation checks if they point to public endpoints. However, because the iss (issuer) field inside their token won't match your expected_issuer URL, Grafana will immediately reject it.
+      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_piKEa7JNX"
+
+
+prometheus:
+  service:
+    type: ClusterIP
+
+    # The port exposed by the Service
+    port: 9090     
+
+    # The port Prometheus container listens on                                     
+    targetPort: 9090 
+                                       
+  prometheusSpec:                           
+    replicas: 1
+    nodeSelector:
+      
+      # Schedule only on monitoring nodes
+      role: monitoring-node         
+
+    # Keep metrics data for 15 days                    
+    retention: 15d                                      
+    storageSpec:
+
+      # ephemeral, no Persistent Volume Claim (PVC) used for now. You can add EBS in production or even use s3                 
+      emptyDir: {}                                      
+          
