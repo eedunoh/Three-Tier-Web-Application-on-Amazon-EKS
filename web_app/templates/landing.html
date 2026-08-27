@@ -1,50 +1,53 @@
-{% extends "base.html" %}
-
-{% block title %}Welcome to ArtisanConnect{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="header">
-        <h1>ArtisanConnect</h1>
-        <p>Connect with skilled Nigerian professionals in your area</p>
-    </div>
-    
-    <div style="max-width: 400px; margin: 0 auto;">
-        <div class="card">
-            <div style="text-align: center;">
-                <h2 style="margin-bottom: 1rem; color: #333;">Get Started</h2>
-                <p style="margin-bottom: 2rem; color: #666;">Find trusted artisan companies for your needs</p>
-                
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <!-- Sign Up: direct link to Cognito hosted UI signup -->
-                    <a href="{{ signup_url }}"
-                       class="btn" style="width: 100%;">
-                        🔧 Create Account
-                    </a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to ArtisanConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        /* Add any custom CSS here */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn { display: inline-block; padding: 10px 20px; margin: 5px 0; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .btn-secondary { background: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ArtisanConnect</h1>
+            <p>Connect with skilled Nigerian professionals in your area</p>
+        </div>
+        
+        <div style="max-width: 400px; margin: 0 auto;">
+            <div class="card">
+                <div style="text-align: center;">
+                    <h2 style="margin-bottom: 1rem; color: #333;">Get Started</h2>
+                    <p style="margin-bottom: 2rem; color: #666;">Find trusted artisan companies for your needs</p>
                     
-                    <!-- Sign In: ALB will redirect to Cognito login automatically -->
-                    <a href="{{ url_for('home') }}"
-                       class="btn btn-secondary" style="width: 100%;">
-                        🔑 Sign In
-                    </a>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <a href="{{ signup_url }}" class="btn" style="width: 100%;">🔧 Create Account</a>
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary" style="width: 100%;">🔑 Sign In</a>
+                    </div>
+                    
+                    <div style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px;">
+                        <h3 style="color: #333; margin-bottom: 1rem; font-size: 1.1rem;">Available Services</h3>
+                        <ul style="list-style: none; color: #666; line-height: 1.8;">
+                            <li>⚡ Electrical & Electronics</li>
+                            <li>🔧 Plumbing Services</li>
+                            <li>🪵 Wood & Carpentry</li>
+                            <li>🎨 Painting Services</li>
+                            <li>❄️ HVAC Systems</li>
+                        </ul>
+                    </div>
+                    
+                    <p style="margin-top: 1.5rem; font-size: 14px; color: #666;">Join thousands of satisfied customers across Nigeria</p>
                 </div>
-                
-                <div style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px;">
-                    <h3 style="color: #333; margin-bottom: 1rem; font-size: 1.1rem;">Available Services</h3>
-                    <ul style="list-style: none; color: #666; line-height: 1.8;">
-                        <li>⚡ Electrical & Electronics</li>
-                        <li>🔧 Plumbing Services</li>
-                        <li>🪵 Wood & Carpentry</li>
-                        <li>🎨 Painting Services</li>
-                        <li>❄️ HVAC Systems</li>
-                    </ul>
-                </div>
-                
-                <p style="margin-top: 1.5rem; font-size: 14px; color: #666;">
-                    Join thousands of satisfied customers across Nigeria
-                </p>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>

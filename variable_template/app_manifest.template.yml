@@ -39,6 +39,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: eks-app-svc
+
+  # The ALB health check path defaults to '/' because that’s the standard behavior of the AWS Load Balancer Controller when creating a target group from a Kubernetes Service. 
+  # It doesn’t automatically know which path is appropriate for the application. It just uses the root by convention. So I need to configure the correct health check path for my app either; 
+  # Automatically using this yml manifest as shown below OR Manually using the CLI: kubectl annotate svc <service_name> -n default alb.ingress.kubernetes.io/healthcheck-path=/health 
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /health
 spec:
   selector:
 
