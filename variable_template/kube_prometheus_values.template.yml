@@ -5,11 +5,13 @@
 # I'm configuring a pre-built application rather than manually defining every Kubernetes object like Deployment, Service, ConfigMap etc.
 
 
-# By default, the Kubernetes Service name created by the kube-prometheus-stack Helm chart follows the pattern [RELEASE-NAME]-grafana.
-# My Helm command uses monitoring as the RELEASE-NAME: helm upgrade --install monitoring prometheus-community ...
-# Therefore Helm creates the Grafana Service as 'monitoring-grafana'.
-# My HTTPRoute uses backendRef: monitoring-grafana:80 because it is referring to that Helm-created Service.
+# To get the service name of a Helm chart application (such as prometheus and grafana) especially when using values.yml, by default, the service name for grafana created by the kube-prometheus-stack Helm chart follows the pattern [RELEASE-NAME]-grafana.
+# In my setup, I used an argoCD application named "argo-monitoring" to release/deploy kube-prometheus-stack via helm. So "argo-monitoring" forms the RELEASE-NAME.
+# Therefore the Grafana service is created as 'argo-monitoring-grafana.
 
+# You can use this code to get the services names in a particular namespace: kubectl get svc -n <namespace>
+
+# This is different from my app, because I explicitly created a service manifest and named it. So the argoCD application cant overwrite that.
 
 grafana:
 

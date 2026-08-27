@@ -53,6 +53,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: monitoring-grafana
+                name: argo-monitoring-grafana
                 port:
                   number: 80

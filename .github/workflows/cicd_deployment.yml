@@ -44,7 +44,7 @@ jobs:
 
       AWS_REGION: "eu-north-1"
       APP_IMAGE: ${{ vars.IMAGE }}:${{ github.sha }}
-      GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
+      GRAFANA_PASSWORD: ${{ vars.GRAFANA_PASSWORD }}
 
     steps:
 
