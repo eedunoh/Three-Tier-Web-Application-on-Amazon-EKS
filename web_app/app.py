@@ -11,7 +11,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 app = Flask(__name__)
 
 # For test
-app.secret_key = "artisanapp0101"
+app.secret_key = "artisanapp0101"  # For Test. In production, app will be well written.
 
 REGION = "eu-north-1"
 
@@ -31,31 +31,42 @@ S3_BUCKET_NAME = get_ssm_parameter("s3_bucket_name")
 
 DYNAMO_TABLE = get_ssm_parameter("dynamodb_name")
 
+# Cognito Hosted UI domain – where Cognito’s login/signup pages live.
 APP_DOMAIN = get_ssm_parameter("cognito_domain")
 COGNITO_DOMAIN = f"{APP_DOMAIN}.auth.{REGION}.amazoncognito.com"
 
-COGNITO_CLIENT_ID = get_ssm_parameter("cognito_user_pool_id")
+COGNITO_CLIENT_ID = get_ssm_parameter("cognito_client_id")
 
-APP_DOMAIN = "https://www.builtbyedunoh.com"   # no trailing slash
+# My app’s public URL – where my Flask app is served.
+APP_PUBLIC_URL = "https://www.builtbyedunoh.com"   # no trailing slash
+
+
+@app.route("/cognito-login")
+def cognito_login():
+    # Build the Cognito authorize URL (same as ALB would use)
+    cognito_authorize = (
+        f"https://{COGNITO_DOMAIN}/oauth2/authorize"
+        f"?client_id={COGNITO_CLIENT_ID}"
+        f"&response_type=code"
+        f"&scope=openid+email+profile"
+        f"&redirect_uri={APP_PUBLIC_URL}/oauth2/idpresponse"   # ALB callback
+    )
+    return redirect(cognito_authorize)
 
 
 def get_authenticated_user():
-    identity = request.headers.get("X-Amzn-Oidc-Identity")
     data_header = request.headers.get("X-Amzn-Oidc-Data")
-
-    if not identity or not data_header:
-        return None
-
-    try:
-        claims = json.loads(base64.b64decode(data_header).decode("utf-8"))
-    except Exception:
-        return None
-
-    return {
-        "username": claims.get("cognito:username", identity),
-        "email": claims.get("email", ""),
-        "groups": claims.get("cognito:groups", []),
-    }
+    if data_header:
+        try:
+            claims = json.loads(base64.b64decode(data_header).decode("utf-8"))
+            return {
+                "username": claims.get("cognito:username") or claims.get("email", "unknown"),
+                "email": claims.get("email", ""),
+                "groups": claims.get("cognito:groups", []),
+            }
+        except Exception:
+            pass
+    return None
 
 
 def login_required(f):
@@ -64,7 +75,7 @@ def login_required(f):
         user = get_authenticated_user()
         if not user:
             flash("Please log in", "error")
-            return redirect(url_for("landing"))
+            return redirect(url_for("cognito_login")) 
         return f(user, *args, **kwargs)
     return wrapper
 
@@ -98,14 +109,25 @@ def health_check():
 
 @app.route("/")
 def landing():
-    # Build the Cognito sign-up URL.
+    # Build the Cognito sign-up URL. This is a direct link to Cognito’s sign-up page.
     # After sign-up, Cognito redirects the user back to the landing page.
+
+    # client_id must be cognito App Client ID.
+    # response_type=code tells Cognito to use the Authorization Code grant.
+    # scope=openid+email+profile requests the OIDC scopes so that Cognito returns an ID token with email and profile claims.
+    # redirect_uri is where Cognito sends the user after successful sign-up. It must be exactly listed in the Cognito App Client → Hosted UI → Allowed callback URLs.
+    # In Cognito settings, I added:
+    # callback_urls = [
+    #     "https://www.builtbyedunoh.com/oauth2/idpresponse",   # for ALB authentication
+    #     "https://www.builtbyedunoh.com/"                      # for direct signup redirect
+    # ]
+
     signup_url = (
         f"https://{COGNITO_DOMAIN}/signup"
         f"?client_id={COGNITO_CLIENT_ID}"
         f"&response_type=code"
         f"&scope=openid+email+profile"
-        f"&redirect_uri={APP_DOMAIN}/"
+        f"&redirect_uri={APP_PUBLIC_URL}/home"
     )
 
     return render_template("landing.html", signup_url=signup_url)
@@ -182,18 +204,18 @@ def submit_request(user):
     return redirect(url_for("home"))
 
 
+
+
+# If I redirect straight to / (landing page) without logging out of Cognito, the user would still have a valid Cognito session. 
+# The next time they click Sign In, the ALB might skip the login page and send them straight to /home because they’re still authenticated. That would break the expected logout behavior.
+# Ensure the redirect URIs (Example: https://www.builtbyedunoh.com/) are registered in Cognito app client settings under Allowed callback URLs and Allowed logout URLs.
 @app.route("/logout")
 def logout():
-
-    # If I redirect straight to / (landing page) without logging out of Cognito, the user would still have a valid Cognito session. 
-    # The next time they click Sign In, the ALB might skip the login page and send them straight to /home because they’re still authenticated. That would break the expected logout behavior.
     cognito_logout = (
         f"https://{COGNITO_DOMAIN}/logout"
         f"?client_id={COGNITO_CLIENT_ID}"
-        f"&logout_uri={APP_DOMAIN}/"
+        f"&logout_uri={APP_PUBLIC_URL}/home"
     )
-
-    # Redirect to Cognito logout, but also clear the ALB session cookie.
     resp = redirect(cognito_logout)
     resp.delete_cookie("AWSELBAuthSessionCookie")
     return resp
@@ -201,101 +223,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 1. User visits your domain (e.g., https://www.builtbyedunoh.com/)
-# They see the landing page (landing.html).
-
-# The landing page has two buttons:
-
-# Create Account
-
-# Sign In
-
-# No login form is shown here. The Flask app does not ask for credentials.
-
-# 2. If the user clicks Sign In
-# The button is a simple link to /home.
-
-# The browser requests /home.
-
-# Your ALB is configured with Cognito authentication for the /home path.
-
-# Since the user is not logged in yet, the ALB redirects the browser to Cognito’s hosted login page.
-
-# The browser now displays Cognito’s login form (username/password).
-
-# User enters their credentials.
-
-# Cognito verifies them.
-
-# Cognito redirects the browser back to your ALB, which then sends the user to /home with the authentication headers.
-
-# Your Flask app reads the headers and shows the home.html page.
-
-# So the user never sees a login page from your Flask app. Login is entirely handled by Cognito.
-
-# 3. If the user clicks Create Account (new user)
-# The button is a direct link to Cognito’s sign-up page (signup_url built in Flask).
-
-# The browser goes to Cognito’s sign-up form.
-
-# User fills in their details and submits.
-
-# Cognito registers the user and (depending on your settings) may send a verification email.
-
-# After sign-up, Cognito redirects the browser back to the URL you provided as redirect_uri. In your Flask code, this is set to https://www.builtbyedunoh.com/ (the landing page).
-
-# The user is now back on the landing page.
-
-# They then click Sign In and go through the normal login flow (step 2).
-
-# This matches exactly what you described:
-
-# “Once the user signs up, it takes the user back to the landing page and asks the user to sign in.”
-
-# 4. Logout
-# On the home.html page, there is a Logout link.
-
-# Clicking it calls /logout in Flask.
-
-# That route redirects to Cognito’s logout endpoint and clears the ALB session cookie.
-
-# The user is returned to the landing page (https://www.builtbyedunoh.com/).
-
-# They are now logged out and see the two buttons again.
-
-# Why is it confusing?
-# Because the Sign In button does not look like a login form; it just points to /home. But the ALB automatically redirects to Cognito, so the user never sees a separate login page from your app. The login form they see is Cognito’s, not Flask’s.
-
-# Diagram
-# text
-# Landing page (/)
-#   ├── [Create Account] → Cognito signup → redirect back to landing
-#   └── [Sign In] → /home → ALB redirects to Cognito login → back to /home
-# Key Configuration Checklist
-# Make sure in Cognito app client you have:
-
-# Callback URL for ALB login: https://www.builtbyedunoh.com/oauth2/idpresponse
-
-# Callback URL for signup direct link: https://www.builtbyedunoh.com/ (or whatever APP_DOMAIN/ is in Flask)
-
-# Logout URL: https://www.builtbyedunoh.com/
-
-# And in your ALB ingress, the auth settings are correctly applied to / or /home (or both) as needed.
-
-# That’s the whole flow. No additional pages in your Flask app are needed.

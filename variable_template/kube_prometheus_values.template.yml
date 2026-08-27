@@ -64,36 +64,20 @@ grafana:
     auth.jwt:
       enabled: true
 
-      # ALB sends this header after Cognito authentication. 
-      # The X-Amzn-Oidc-Accesstoken header is the raw access token issued directly by Amazon Cognito, passed through by the ALB without alteration.
-      # By targeting this specific header instead of X-Amzn-Oidc-Data, you can bypass the ALB signature verification problem completely. Because this is the original Cognito-signed JWT, you can point Grafana's jwk_set_url straight to Cognito's static JWKS endpoint.
-      header_name: X-Amzn-Oidc-Accesstoken
+      header_name: X-Amzn-Oidc-Data
 
-      # These claims exist in the Cognito access token
+      # These claims exist in the Cognito data token
       username_claim: cognito:username
       email_claim: email
 
       auto_sign_up: true
 
-
-      # This language is called JMESPath (pronounced "James Path"). It is a query and transformation language designed specifically for JSON data, and it is natively used by Grafana (and the AWS CLI) to filter, parse, and reshape complex JSON token payloads.
-      # If 'cognito:groups' contains 'admin', assign them the 'Admin' role.
-      # If 'cognito:groups' contains 'users' (or anything else), it outputs nothing.
-      role_attribute_path: "(\"cognito:groups\" | contains([*], 'admin') && 'Admin' || 'None')"
+      role_attribute_path: ""
       
-      # Enforce strict checking. Because 'users' evaluated to 'None' (an invalid/null baseline role), Grafana intercepts the session and completely denies them access to the application.
-      role_attribute_strict: true
+      role_attribute_strict: false
 
-
-      # Cognito's public signing keys. It downloads the public cryptographic keys from your specific Amazon Cognito User Pool.
-      # Every time a user accesses Grafana, Grafana uses these public keys to mathematically verify the signature on the X-Amzn-Oidc-Accesstoken. 
-      # It proves that the token was genuinely minted by your Cognito instance and hasn't been modified or faked by someone trying to hack into your system.
       jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json"
 
-
-      # Cognito issuer. It explicitly tells Grafana: "Only accept tokens where the iss claim inside the payload matches this exact URL string."
-      # This prevents Cross-Pool Impersonation. If a malicious actor creates their own free AWS Cognito User Pool in another account, generates a valid token from their pool, and passes it to your ALB/Grafana, 
-      # the signature might technically pass validation checks if they point to public endpoints. However, because the iss (issuer) field inside their token won't match your expected_issuer URL, Grafana will immediately reject it.
       expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/${USER_POOL_ID}"
 
 

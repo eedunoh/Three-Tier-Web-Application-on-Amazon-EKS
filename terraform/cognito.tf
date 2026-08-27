@@ -102,6 +102,7 @@ resource "aws_cognito_user_pool" "my_user_pool" {
 }
 
 # Configure Cognito Domain
+# Cognito Hosted UI domain – where Cognito’s login/signup pages live.
 # Cognito domain = the login endpoint Cognito provides, e.g. https://eks-app.auth.eu-north-1.amazoncognito.com. Users are sent here to log in.
 resource "aws_cognito_user_pool_domain" "my_domain" {
   domain       = "eks-app"                                     # The Cognito domain is needed for OAuth token exchange between the app and cognito. It works behind the scene.
