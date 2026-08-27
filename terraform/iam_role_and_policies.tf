@@ -97,6 +97,7 @@ resource "aws_iam_policy" "ssm_dynamodb_and_s3_access" {
           "${aws_ssm_parameter.cognito_user_pool_id.arn}",
           "${aws_ssm_parameter.cognito_client_id.arn}",
           "${aws_ssm_parameter.cognito_client_secret.arn}",
+          "${aws_ssm_parameter.aws_cognito_user_pool_domain.arn}",
           "${aws_ssm_parameter.s3_bucket_name.arn}",
           "${aws_ssm_parameter.dynamodb_name.arn}",
           "${aws_ssm_parameter.region.arn}"
