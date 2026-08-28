@@ -21,11 +21,14 @@ spec:
       nodeSelector:
 
         # Pod MUST run on a node with role=app_worker
-        role: app_worker       
+        role: app_worker     
+        
+      # I created a service account and attached it using terraform pod identity. I will just reference the service account name here.
+      serviceAccountName: eks-app-service-account   
         
       containers:
       - name: my-webapp
-        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:ddb5d01958a1bf6cc05678ca1ec0169813470978"
+        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:3a0a8ad346096fab3da7de8f4e2f7ea0483001e4"
         ports:
         - containerPort: 80
 
