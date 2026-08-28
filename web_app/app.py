@@ -208,26 +208,11 @@ def logout():
     resp = redirect(cognito_logout)
 
     # That line deletes the ALB authentication session cookie for "www.builtbyedunoh.com/" from the user’s browser
-    resp.set_cookie(
+    resp.delete_cookie(
         "AWSELBAuthSessionCookie",
-        "",
-        expires=0,
-
-        # matches ALB cookie domain
-        domain="www.builtbyedunoh.com", 
-          
-        # matches ALB cookie path
-        path="/home",                      
-        secure=True,
-        httponly=True
+        domain=".builtbyedunoh.com",
+        path="/"
     )
-
-    # Same thing as above just done differently
-    # resp.delete_cookie(
-    #     "AWSELBAuthSessionCookie",
-    #     domain="www.builtbyedunoh.com",
-    #     path="/"
-    # )
     
     return resp
 
