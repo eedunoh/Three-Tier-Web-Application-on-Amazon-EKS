@@ -149,6 +149,42 @@ resource "aws_eks_node_group" "app_worker" {
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+# For some reason (more investigations to come), my eks webapp pod couldn't gain permission to pull parameters from ssm, s3 and DynamoDB using the app_worker node IAM role and policies. 
+# So I'll attach the role and policies directly to the eks webapp pod using pod identity.
+# I will also update the app_manifest to use this service account.
+resource "kubernetes_service_account" "app_service_account" {
+  metadata {
+    name      = "eks-app-service-account"
+
+    # my default namespace. This is the namespace where the app is deployed.
+    namespace = "default"
+  }
+}
+
+
+resource "aws_eks_pod_identity_association" "app" {
+  cluster_name    = aws_eks_cluster.eks_cluster.name
+
+  # must match the ServiceAccount namespace
+  namespace       = "default"   
+    
+  # must match the ServiceAccount name       
+  service_account = "eks-app-service-account"
+
+  role_arn = aws_iam_role.eks_webapp_pod_role.arn
+
+  depends_on = [
+
+    # The EKS Pod Identity Agent was already installed in the cluster_autoscaler terraform script. So I will just reference it here.
+    aws_eks_addon.pod_identity_agent,
+    aws_iam_role_policy_attachment.eks_webapp_pod_s3_ssm_attachment
+  ]
+}
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 output "eks_cluster_name" {
   value = aws_eks_cluster.eks_cluster.name
 }
