@@ -28,7 +28,7 @@ terraform {
 
 
 
-# I encountered issues where Terraform couldn't authenticate to my Kubernetes cluster for Helm (https://registry.terraform.io/providers/hashicorp/helm/latest/docs) OR Kubernetes resources like service accounts.
+# I encountered issues where Terraform couldn't authenticate to my Kubernetes cluster for Helm or Kubernetes resources like service accounts.
 # This code configures both the Helm and Kubernetes providers to connect to Amazon EKS. It does two things:
 # Fetches a temporary authentication token using the aws_eks_cluster_auth data source.
 # Uses that token along with the cluster endpoint and CA certificate to authenticate both providers to Kubernetes.
@@ -37,6 +37,8 @@ data "aws_eks_cluster_auth" "main" {
   name = aws_eks_cluster.eks_cluster.name
 }
 
+
+# https://registry.terraform.io/providers/hashicorp/helm/latest/docs
 provider "helm" {
   kubernetes = {
     host                   = aws_eks_cluster.eks_cluster.endpoint
