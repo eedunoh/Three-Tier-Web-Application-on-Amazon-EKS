@@ -164,14 +164,14 @@ resource "aws_cognito_user_pool_client" "my_user_pool_client" {
   # The user does not visit /oauth2/idpresponse as an application page, and you don't route it to Flask or Grafana. The ALB handles it internally, completes the authentication, and then continues the user's original request to / or /grafana.
   callback_urls = [
     "https://www.builtbyedunoh.com/oauth2/idpresponse",       # for ALB authentication
-    "https://www.builtbyedunoh.com/"                          # for direct signup redirect
+    "https://www.builtbyedunoh.com/home"                          # for direct signup redirect
   ]
 
 
   # The logout_urls list is required because your Flask /logout route redirects the browser to Cognito's logout endpoint with a logout_uri parameter.
   # https://www.builtbyedunoh.com/ is where I want the user to land after logout. I must explicitly tell Cognito: “This URL is allowed for logout redirects.”
   logout_urls = [
-    "https://www.builtbyedunoh.com/"
+    "https://www.builtbyedunoh.com/home"
   ]
 }
 
