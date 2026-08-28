@@ -11,6 +11,12 @@ terraform {
       version = "~> 3.2.0"
     }
 
+    # Allows Terraform to manage Kubernetes resources (like ServiceAccounts) directly, and must be configured with cluster authentication to connect to EKS.
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.20"
+    }
+
     # Enables Terraform to fetch data from HTTP(S) URLs. In my setup, it’s used to retrieve the AWS Load Balancer Controller IAM policy JSON from GitHub, so I don’t have to store it locally.
     http = {
       source  = "hashicorp/http"
@@ -20,10 +26,13 @@ terraform {
 }
 
 
-# I encountered an issue where helm couldn't authenticate to my Kubernetes cluster - https://registry.terraform.io/providers/hashicorp/helm/latest/docs
-# This code configures the Helm provider in Terraform to connect to your Amazon EKS cluster. It does two things:
+
+
+# I encountered issues where Terraform couldn't authenticate to my Kubernetes cluster for Helm (https://registry.terraform.io/providers/hashicorp/helm/latest/docs) OR Kubernetes resources like service accounts.
+# This code configures both the Helm and Kubernetes providers to connect to Amazon EKS. It does two things:
 # Fetches a temporary authentication token using the aws_eks_cluster_auth data source.
-# Uses that token along with the cluster endpoint and CA certificate to authenticate the Helm provider to Kubernetes.
+# Uses that token along with the cluster endpoint and CA certificate to authenticate both providers to Kubernetes.
+
 data "aws_eks_cluster_auth" "main" {
   name = aws_eks_cluster.eks_cluster.name
 }
@@ -35,6 +44,13 @@ provider "helm" {
     token                  = data.aws_eks_cluster_auth.main.token
   }
 }
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.main.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.main.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.main.token
+}
+
 
 
 
