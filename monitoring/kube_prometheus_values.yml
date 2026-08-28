@@ -59,7 +59,8 @@ grafana:
       serve_from_sub_path: true
 
     auth:
-      disable_login_form: false
+      # Set to "true" if you want to use single sign-on. Else imput "false"
+      disable_login_form: true
 
     auth.jwt:
       enabled: true
@@ -76,9 +77,9 @@ grafana:
       
       role_attribute_strict: false
 
-      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_h4EY7xK0b/.well-known/jwks.json"
+      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_yeS9cglNs/.well-known/jwks.json"
 
-      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_h4EY7xK0b"
+      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_yeS9cglNs"
 
 
 prometheus:
@@ -104,4 +105,3 @@ prometheus:
 
       # ephemeral, no Persistent Volume Claim (PVC) used for now. You can add EBS in production or even use s3                 
       emptyDir: {}                                      
-          
