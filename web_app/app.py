@@ -217,7 +217,7 @@ def logout():
         domain="www.builtbyedunoh.com", 
           
         # matches ALB cookie path
-        path="/",                      
+        path="/home",                      
         secure=True,
         httponly=True
     )
