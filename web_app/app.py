@@ -1,4 +1,3 @@
-import os
 import base64
 import json
 import random
@@ -10,16 +9,15 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 
 app = Flask(__name__)
 
-# For test
-app.secret_key = "artisanapp0101"  # For Test. In production, app will be well written.
+# For test only; replace with a secure secret in production
+app.secret_key = "artisanapp0101"
 
 REGION = "eu-north-1"
 
 
-# Extract useful data from AWS SSM Parameter Store
 def get_ssm_parameter(param_name, with_decryption=True):
     try:
-        ssm = boto3.client("ssm", region_name = REGION)
+        ssm = boto3.client("ssm", region_name=REGION)
         response = ssm.get_parameter(Name=param_name, WithDecryption=with_decryption)
         return response["Parameter"]["Value"]
     except Exception as e:
@@ -28,33 +26,37 @@ def get_ssm_parameter(param_name, with_decryption=True):
 
 
 S3_BUCKET_NAME = get_ssm_parameter("s3_bucket_name")
-
 DYNAMO_TABLE = get_ssm_parameter("dynamodb_name")
 
 # Cognito Hosted UI domain – where Cognito’s login/signup pages live.
-APP_DOMAIN = get_ssm_parameter("cognito_domain")
-COGNITO_DOMAIN = f"{APP_DOMAIN}.auth.{REGION}.amazoncognito.com"
+COGNITO_DOMAIN_PREFIX = get_ssm_parameter("cognito_domain")
+COGNITO_DOMAIN = f"{COGNITO_DOMAIN_PREFIX}.auth.{REGION}.amazoncognito.com"
 
 COGNITO_CLIENT_ID = get_ssm_parameter("cognito_client_id")
 
-# My app’s public URL – where my Flask app is served.
+# Public URL of the app
 APP_PUBLIC_URL = "https://www.builtbyedunoh.com"   # no trailing slash
 
 
-@app.route("/cognito-login")
-def cognito_login():
-    # Build the Cognito authorize URL (same as ALB would use)
-    cognito_authorize = (
+def build_cognito_authorize_url():
+    """Build the Cognito authorization URL (same as ALB would use)."""
+    return (
         f"https://{COGNITO_DOMAIN}/oauth2/authorize"
         f"?client_id={COGNITO_CLIENT_ID}"
         f"&response_type=code"
         f"&scope=openid+email+profile"
-        f"&redirect_uri={APP_PUBLIC_URL}/oauth2/idpresponse"   # ALB callback
+        f"&redirect_uri={APP_PUBLIC_URL}/oauth2/idpresponse"
     )
-    return redirect(cognito_authorize)
+
+
+@app.route("/cognito-login")
+def cognito_login():
+    """Public route that redirects to Cognito login (used as fallback)."""
+    return redirect(build_cognito_authorize_url())
 
 
 def get_authenticated_user():
+    """Extract user info from ALB headers (ID token payload)."""
     data_header = request.headers.get("X-Amzn-Oidc-Data")
     if data_header:
         try:
@@ -75,11 +77,12 @@ def login_required(f):
         user = get_authenticated_user()
         if not user:
             flash("Please log in", "error")
-            return redirect(url_for("cognito_login")) 
+            return redirect(url_for("cognito_login"))
         return f(user, *args, **kwargs)
     return wrapper
 
 
+# Sample data (unchanged)
 artisan_categories = {
     "Electrical": ["Bright Sparks Ltd", "PowerFix Nigeria"],
     "Plumbing": ["PipeMasters", "FlowFix Nigeria"],
@@ -108,29 +111,9 @@ def health_check():
 
 
 @app.route("/")
-def landing():
-    # Build the Cognito sign-up URL. This is a direct link to Cognito’s sign-up page.
-    # After sign-up, Cognito redirects the user back to the landing page.
-
-    # client_id must be cognito App Client ID.
-    # response_type=code tells Cognito to use the Authorization Code grant.
-    # scope=openid+email+profile requests the OIDC scopes so that Cognito returns an ID token with email and profile claims.
-    # redirect_uri is where Cognito sends the user after successful sign-up. It must be exactly listed in the Cognito App Client → Hosted UI → Allowed callback URLs.
-    # In Cognito settings, I added:
-    # callback_urls = [
-    #     "https://www.builtbyedunoh.com/oauth2/idpresponse",   # for ALB authentication
-    #     "https://www.builtbyedunoh.com/"                      # for direct signup redirect
-    # ]
-
-    signup_url = (
-        f"https://{COGNITO_DOMAIN}/signup"
-        f"?client_id={COGNITO_CLIENT_ID}"
-        f"&response_type=code"
-        f"&scope=openid+email+profile"
-        f"&redirect_uri={APP_PUBLIC_URL}/home"
-    )
-
-    return render_template("landing.html", signup_url=signup_url)
+def index():
+    """Redirect authenticated users to the home page; ALB handles auth."""
+    return redirect(url_for("home"))
 
 
 @app.route("/home")
@@ -172,18 +155,12 @@ def submit_request(user):
         if file:
             from werkzeug.utils import secure_filename
             s3 = boto3.client("s3", region_name=REGION)
-
             filename = secure_filename(file.filename)
-
             s3.upload_fileobj(file, S3_BUCKET_NAME, filename)
-
             s3_key = filename
 
-
         dynamodb = boto3.resource("dynamodb", region_name=REGION)
-
         table = dynamodb.Table(DYNAMO_TABLE)
-
         table.put_item(Item={
             "username": user["username"],
             "request_date": datetime.now(timezone.utc).isoformat(),
@@ -204,11 +181,6 @@ def submit_request(user):
     return redirect(url_for("home"))
 
 
-
-
-# If I redirect straight to / (landing page) without logging out of Cognito, the user would still have a valid Cognito session. 
-# The next time they click Sign In, the ALB might skip the login page and send them straight to /home because they’re still authenticated. That would break the expected logout behavior.
-# Ensure the redirect URIs (Example: https://www.builtbyedunoh.com/) are registered in Cognito app client settings under Allowed callback URLs and Allowed logout URLs.
 @app.route("/logout")
 def logout():
     cognito_logout = (

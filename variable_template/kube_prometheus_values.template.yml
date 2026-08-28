@@ -17,8 +17,8 @@ grafana:
 
   # Sets Grafana admin login password
   adminPassword: "${GRAFANA_PASSWORD}"      
-
-  # username: "admin"
+  username: "admin"
+  
   service:
 
     # The Service is reachable internally within the Kubernetes cluster. 
@@ -59,7 +59,7 @@ grafana:
       serve_from_sub_path: true
 
     auth:
-      disable_login_form: true
+      disable_login_form: false
 
     auth.jwt:
       enabled: true
