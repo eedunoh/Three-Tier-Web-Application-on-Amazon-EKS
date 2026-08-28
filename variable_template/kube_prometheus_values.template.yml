@@ -16,8 +16,8 @@
 grafana:
 
   # Sets Grafana admin login password
-  adminPassword: "${GRAFANA_PASSWORD}"      
-  username: "admin"
+  # adminPassword: "${GRAFANA_PASSWORD}"      
+  # username: "admin"
   
   service:
 
@@ -68,18 +68,18 @@ grafana:
       header_name: X-Amzn-Oidc-Data
 
       # These claims exist in the Cognito data token
-      username_claim: cognito:username
+      username_claim: username
       email_claim: email
 
       auto_sign_up: true
 
-      role_attribute_path: ""
-      
-      role_attribute_strict: false
-
       jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json"
 
       expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/${USER_POOL_ID}"
+
+      role_attribute_path: ""
+      
+      role_attribute_strict: false
 
 
 prometheus:

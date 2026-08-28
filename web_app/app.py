@@ -57,6 +57,16 @@ def cognito_login():
 
 
 
+# The /debug_headers route is a temporary diagnostic endpoint to help you see exactly what HTTP headers the ALB sends to your Flask app after authentication.
+# When you access that route in your browser while logged in, it returns a JSON object containing all request headers.
+# Log in to your app. Visit https://www.builtbyedunoh.com/debug_headers to view the full header. Not you will need to decode into a human readable format as the default format may not make sense to you.
+@app.route("/debug_headers")
+def debug_headers():
+    headers = {k: v for k, v in request.headers.items()}
+    return jsonify(headers)
+
+
+
 def get_authenticated_user():
     """Extract user info from ALB headers (ID token payload)."""
     data_header = request.headers.get("X-Amzn-Oidc-Data")
@@ -64,9 +74,9 @@ def get_authenticated_user():
         try:
             claims = json.loads(base64.b64decode(data_header).decode("utf-8"))
             return {
-                "username": claims.get("cognito:username") or claims.get("email", "unknown"),
+                "username": claims.get("username") or claims.get("email", "unknown"),
                 "email": claims.get("email", ""),
-                "groups": claims.get("cognito:groups", []),
+                "groups": claims.get("groups", []),
             }
         except Exception:
             pass
@@ -83,17 +93,6 @@ def login_required(f):
             return redirect(url_for("cognito_login"))
         return f(user, *args, **kwargs)
     return wrapper
-
-
-
-# The /debug_headers route is a temporary diagnostic endpoint to help you see exactly what HTTP headers the ALB sends to your Flask app after authentication.
-# When you access that route in your browser while logged in, it returns a JSON object containing all request headers.
-# Log in to your app. Visit https://www.builtbyedunoh.com/debug_headers.
-@app.route("/debug_headers")
-def debug_headers():
-    headers = {k: v for k, v in request.headers.items()}
-    return jsonify(headers)
-
 
 
 # Sample data (unchanged)
@@ -132,17 +131,19 @@ def index():
 
 @app.route("/home")
 @login_required
+# The user here is from get_authenticated_user() served via @login_required. 
 def home(user):
-    email = user["email"] or user["username"]
-    artisans = generate_fixed_artisans()
+    email = user.get("email") or user.get("username", "unknown")
+    username = user.get("username") or email.split("@")[0]
 
+    artisans = generate_fixed_artisans()
     category_counts = {}
     for artisan in artisans:
         category_counts[artisan["category"]] = category_counts.get(artisan["category"], 0) + 1
 
     return render_template(
         "home.html",
-        username=email.split("@")[0],
+        username=username,
         email=email,
         artisans=artisans,
         category_counts=category_counts,
@@ -206,8 +207,28 @@ def logout():
     )
     resp = redirect(cognito_logout)
 
-    # That line deletes the ALB authentication session cookie for ".builtbyedunoh.com/" from the user’s browser
-    resp.delete_cookie("AWSELBAuthSessionCookie", domain=".builtbyedunoh.com", path="/")
+    # That line deletes the ALB authentication session cookie for "www.builtbyedunoh.com/" from the user’s browser
+    resp.set_cookie(
+        "AWSELBAuthSessionCookie",
+        "",
+        expires=0,
+
+        # matches ALB cookie domain
+        domain="www.builtbyedunoh.com", 
+          
+        # matches ALB cookie path
+        path="/",                      
+        secure=True,
+        httponly=True
+    )
+
+    # Same thing as above just done differently
+    # resp.delete_cookie(
+    #     "AWSELBAuthSessionCookie",
+    #     domain="www.builtbyedunoh.com",
+    #     path="/"
+    # )
+    
     return resp
 
 
