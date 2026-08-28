@@ -81,7 +81,6 @@ resource "aws_eks_node_group" "general_and_monitoring" {
     aws_iam_role_policy_attachment.ecr_readonly,
     aws_iam_role_policy_attachment.eks_cni,
     aws_iam_role_policy_attachment.ssm_instance_core,
-    aws_iam_role_policy_attachment.eks_node_s3_ssm_attachment,
     aws_iam_role_policy_attachment.eks_worker
   ]
 
@@ -133,7 +132,6 @@ resource "aws_eks_node_group" "app_worker" {
     aws_iam_role_policy_attachment.ecr_readonly,
     aws_iam_role_policy_attachment.eks_cni,
     aws_iam_role_policy_attachment.ssm_instance_core,
-    aws_iam_role_policy_attachment.eks_node_s3_ssm_attachment,
     aws_iam_role_policy_attachment.eks_worker
   ]
 
