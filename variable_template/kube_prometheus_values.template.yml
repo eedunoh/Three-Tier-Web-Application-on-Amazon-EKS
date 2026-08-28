@@ -59,7 +59,8 @@ grafana:
       serve_from_sub_path: true
 
     auth:
-      disable_login_form: false
+      # Set to "true" if you want to use single sign-on. Else imput "false"
+      disable_login_form: true
 
     auth.jwt:
       enabled: true
@@ -104,4 +105,3 @@ prometheus:
 
       # ephemeral, no Persistent Volume Claim (PVC) used for now. You can add EBS in production or even use s3                 
       emptyDir: {}                                      
-          

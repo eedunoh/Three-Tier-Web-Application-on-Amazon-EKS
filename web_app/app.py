@@ -49,10 +49,12 @@ def build_cognito_authorize_url():
     )
 
 
+
 @app.route("/cognito-login")
 def cognito_login():
     """Public route that redirects to Cognito login (used as fallback)."""
     return redirect(build_cognito_authorize_url())
+
 
 
 def get_authenticated_user():
@@ -71,6 +73,7 @@ def get_authenticated_user():
     return None
 
 
+
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -80,6 +83,17 @@ def login_required(f):
             return redirect(url_for("cognito_login"))
         return f(user, *args, **kwargs)
     return wrapper
+
+
+
+# The /debug_headers route is a temporary diagnostic endpoint to help you see exactly what HTTP headers the ALB sends to your Flask app after authentication.
+# When you access that route in your browser while logged in, it returns a JSON object containing all request headers.
+# Log in to your app. Visit https://www.builtbyedunoh.com/debug_headers.
+@app.route("/debug_headers")
+def debug_headers():
+    headers = {k: v for k, v in request.headers.items()}
+    return jsonify(headers)
+
 
 
 # Sample data (unchanged)
@@ -181,15 +195,19 @@ def submit_request(user):
     return redirect(url_for("home"))
 
 
+# After logout, Cognito redirects to https://www.builtbyedunoh.com/. 
+# The ALB sees no valid session cookie and immediately redirects to Cognito’s login page. User lands on Cognito sign‑in/sign‑up page, fully outside my app.
 @app.route("/logout")
 def logout():
     cognito_logout = (
         f"https://{COGNITO_DOMAIN}/logout"
         f"?client_id={COGNITO_CLIENT_ID}"
-        f"&logout_uri={APP_PUBLIC_URL}/home"
+        f"&logout_uri={APP_PUBLIC_URL}/"
     )
     resp = redirect(cognito_logout)
-    resp.delete_cookie("AWSELBAuthSessionCookie")
+
+    # That line deletes the ALB authentication session cookie for ".builtbyedunoh.com/" from the user’s browser
+    resp.delete_cookie("AWSELBAuthSessionCookie", domain=".builtbyedunoh.com", path="/")
     return resp
 
 

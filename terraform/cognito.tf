@@ -171,7 +171,7 @@ resource "aws_cognito_user_pool_client" "my_user_pool_client" {
   # The logout_urls list is required because your Flask /logout route redirects the browser to Cognito's logout endpoint with a logout_uri parameter.
   # https://www.builtbyedunoh.com/ is where I want the user to land after logout. I must explicitly tell Cognito: “This URL is allowed for logout redirects.”
   logout_urls = [
-    "https://www.builtbyedunoh.com/home"
+    "https://www.builtbyedunoh.com/"
   ]
 }
 
