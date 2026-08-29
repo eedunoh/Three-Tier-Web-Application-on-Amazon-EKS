@@ -1,206 +1,202 @@
-import base64
-import json
-import random
-from datetime import datetime, timezone
-from functools import wraps
-
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+import os, random, logging
+from flask_session import Session
+from config import Config
 import boto3
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from utils import authenticate_user, register_user  # Cognito integration functions
+from datetime import datetime, timezone
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Ensure Config is initialized before creating the app
+Config.initialize()
 
 app = Flask(__name__)
-
-# For test only; replace with a secure secret in production
-app.secret_key = "artisanapp0101"
-
-REGION = "eu-north-1"
-
-
-def get_ssm_parameter(param_name, with_decryption=True):
-    try:
-        ssm = boto3.client("ssm", region_name=REGION)
-        response = ssm.get_parameter(Name=param_name, WithDecryption=with_decryption)
-        return response["Parameter"]["Value"]
-    except Exception as e:
-        print(f"Warning: Unable to fetch {param_name} from SSM - {e}")
-        return None
-
-
-S3_BUCKET_NAME = get_ssm_parameter("s3_bucket_name")
-DYNAMO_TABLE = get_ssm_parameter("dynamodb_name")
-
-# Cognito Hosted UI domain – where Cognito’s login/signup pages live.
-COGNITO_DOMAIN_PREFIX = get_ssm_parameter("cognito_domain")
-COGNITO_DOMAIN = f"{COGNITO_DOMAIN_PREFIX}.auth.{REGION}.amazoncognito.com"
-
-COGNITO_CLIENT_ID = get_ssm_parameter("cognito_client_id")
-
-# Public URL of the app
-APP_PUBLIC_URL = "https://www.builtbyedunoh.com"   # no trailing slash
-
-
-def build_cognito_authorize_url():
-    """Build the Cognito authorization URL (same as ALB would use)."""
-    return (
-        f"https://{COGNITO_DOMAIN}/oauth2/authorize"
-        f"?client_id={COGNITO_CLIENT_ID}"
-        f"&response_type=code"
-        f"&scope=openid+email+profile"
-        f"&redirect_uri={APP_PUBLIC_URL}/oauth2/idpresponse"
-    )
+app.secret_key = Config.APP_SECRET_KEY
+app.config.from_object(Config)
 
 
 
-@app.route("/cognito-login")
-def cognito_login():
-    """Public route that redirects to Cognito login (used as fallback)."""
-    return redirect(build_cognito_authorize_url())
+# Secure session settings
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = False  # Change to True in production (HTTPS)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 
-
-# The /debug_headers route is a temporary diagnostic endpoint to help you see exactly what HTTP headers the ALB sends to your Flask app after authentication.
-# When you access that route in your browser while logged in, it returns a JSON object containing all request headers.
-# Log in to your app. Visit https://www.builtbyedunoh.com/debug_headers to view the full header. Not you will need to decode into a human readable format as the default format may not make sense to you.
-@app.route("/debug_headers")
-def debug_headers():
-    headers = {k: v for k, v in request.headers.items()}
-    return jsonify(headers)
+# Health check endpoint for ALB
+@app.route("/health")
+def health_check():
+    return jsonify({"status": "healthy"}), 200  # ALB expects HTTP 200
 
 
-
-# I analyzed the debug_headers and confirmed that X-Amzn-Oidc-Data is a JWT, not a base64‑encoded JSON string.
-def decode_jwt_payload(token):
-    """Decode the payload segment of a JWT without verifying signature."""
-    parts = token.split('.')
-    if len(parts) != 3:
-        return None
-    payload = parts[1]
-    # Add padding for base64url decoding
-    padding = '=' * (-len(payload) % 4)
-    try:
-        decoded = base64.urlsafe_b64decode(payload + padding)
-        return json.loads(decoded)
-    except Exception:
-        return None
-
-
-# Extract the claims: username and email
-def get_authenticated_user():
-    data_header = request.headers.get("X-Amzn-Oidc-Data")
-    if not data_header:
-        return None
-
-    claims = decode_jwt_payload(data_header)
-    if not claims:
-        return None
-
-    return {
-        "username": claims.get("username") or claims.get("email", "unknown"),
-        "email": claims.get("email", ""),
-    }
-
-
-
-# To confirm what values we have from cognito. This will be displayed in json format
-@app.route("/debug_user")
-def debug_user():
-    user = get_authenticated_user()
-    return jsonify(user)
-
-
-def login_required(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        user = get_authenticated_user()
-        if not user:
-            flash("Please log in", "error")
-            return redirect(url_for("cognito_login"))
-        return f(user, *args, **kwargs)
-    return wrapper
-
-
-# Sample data (unchanged)
+# Artisan categories and cities
 artisan_categories = {
-    "Electrical": ["Bright Sparks Ltd", "PowerFix Nigeria"],
-    "Plumbing": ["PipeMasters", "FlowFix Nigeria"],
-    "Carpentry": ["WoodCraft NG", "FineFinish Carpentry"],
-    "Painting": ["ColorSplash NG", "ProBrush Painters"],
-    "HVAC": ["CoolAir Systems", "ChillPro NG"],
+    "Electrical": ["Bright Sparks Ltd", "PowerFix Nigeria", "LightWave Solutions", "ElectroPro NG", "WireMasters NG", "AmpedUp NG"],
+    "Plumbing": ["PipeMasters", "FlowFix Nigeria", "BlueDrop Plumbing", "LeakStop NG", "DrainPro NG", "SwiftPipe Services", "PlumbKing NG"],
+    "Carpentry": ["WoodCraft NG", "FineFinish Carpentry", "Oak & Nails", "UrbanWood Works", "NailIt Pro", "CarveCraft NG", "EliteWood Masters", "CustomJoinery NG"],
+    "Painting": ["ColorSplash NG", "ProBrush Painters", "FreshCoat Nigeria", "ElitePainters NG", "PaintMaster NG"],
+    "HVAC": ["CoolAir Systems", "ChillPro NG", "AirFix Solutions"]
 }
-cities = ["Uyo", "Lagos", "Abuja", "Port Harcourt"]
-
+cities = ["Uyo", "Lagos", "Ibadan", "Abuja", "Port Harcourt", "Enugu", "Kano"]
 
 def generate_fixed_artisans():
     artisans = []
     for category, names in artisan_categories.items():
-        for name in names:
+        num_to_pick = min(10, len(names))
+        selected_names = names[:num_to_pick]
+        for name in selected_names:
             artisans.append({
                 "name": name,
                 "category": category,
-                "address": f"{random.randint(1, 200)} {random.choice(['Main St', 'Broadway'])}, {random.choice(cities)}",
+                "address": f"{random.randint(1, 200)} {random.choice(['Main St', 'Broadway', 'Market Rd', 'Church St'])}, {random.choice(cities)}",
             })
     return artisans
 
-
-@app.route("/health")
-def health_check():
-    return jsonify({"status": "healthy"}), 200
-
-
 @app.route("/")
-def index():
-    """Redirect authenticated users to the home page; ALB handles auth."""
-    return redirect(url_for("home"))
+def landing():
+    return render_template("landing.html")
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        # Check if the request is JSON (from fetch) or form data
+        if request.is_json:
+            data = request.get_json()
+            username = data.get("username")
+            email = data.get("email")
+            password = data.get("password")
+        else:
+            username = request.form.get("username")
+            email = request.form.get("email")
+            password = request.form.get("password")
+
+        if not username or not email or not password:
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'All fields are required'}), 400
+            else:
+                flash("All fields are required", "error")
+                return redirect(url_for("signup"))
+
+        if register_user(username, password, email):
+            logger.info(f"User '{username}' registered successfully.")
+            if request.is_json:
+                return jsonify({'success': True, 'message': 'Signup successful! Check your email for verification.'})
+            else:
+                flash("Signup successful! Check your email for verification.", "success")
+                return redirect(url_for("login"))
+        else:
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Signup failed. User may already exist.'}), 400
+            else:
+                flash("Signup failed. User may already exist.", "error")
+    
+    return render_template("signup.html")
+
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        if not username or not password:
+            flash("Username and password are required.", "error")
+            return redirect(url_for("login"))
+
+        if authenticate_user(username, password):
+            session["user"] = username
+            session.modified = True
+            flash("Login successful!", "success")
+            return redirect(url_for("home"))
+
+        flash("Invalid credentials. Please try again.", "error")
+
+    return render_template("login.html")
+
 
 
 @app.route("/home")
-@login_required
-# The user here is from get_authenticated_user() served via @login_required. 
-def home(user):
-    email = user.get("email") or user.get("username", "unknown")
-    username = user.get("username") or email.split("@")[0]
+def home():
+    if "user" not in session:
+        return redirect(url_for("login"))
 
+    email = session["user"]
     artisans = generate_fixed_artisans()
+
+    # Count per category
     category_counts = {}
     for artisan in artisans:
         category_counts[artisan["category"]] = category_counts.get(artisan["category"], 0) + 1
 
     return render_template(
         "home.html",
-        username=username,
+        username=email.split("@")[0],  # Example: derive name from email
         email=email,
         artisans=artisans,
         category_counts=category_counts
     )
 
-
 @app.route("/submit_request", methods=["POST"])
-@login_required
-def submit_request(user):
-    email = user["email"] or user["username"]
-    address = request.form.get("address")
-    contact_number = request.form.get("contact_number")
-    service_title = request.form.get("service_title")
-    artisan_name = request.form.get("artisan_name")
-    description = request.form.get("description")
-    file = request.files.get("file")
+def submit_request():
 
+    # Log immediately when the route is hit
+    print("📥 Frontend request reached /submit_request route!")
+    logger.info("📥 Frontend request reached /submit_request route!")
+
+    if "user" not in session:
+        flash("You need to be logged in to submit a request.", "error")
+        return redirect(url_for("home"))
+    
+    print(f"📨 Form data received: {dict(request.form)}")
+    print(f"📁 Files received: {dict(request.files)}")
+    print(f"📦 File object: {request.files.get('file')}")
+
+    username = session["user"]  # Always trust Cognito session, not form input
+    email = request.form.get("email")
+    address = request.form.get('address')
+    contact_number = request.form.get('contact_number')
+    service_title = request.form.get('service_title')
+    artisan_name = request.form.get('artisan_name')
+    description = request.form.get('description')
+    file = request.files.get('file')
+
+    # --- Add validation for required fields ---
     if not all([email, service_title, artisan_name, address, description]):
-        flash("Please fill in all required fields.", "error")
+        flash("Please fill in all required fields: email, service title, artisan, address, and description.", "error")
         return redirect(url_for("home"))
 
+    logger.info(f"Request from {username} ({email}): {service_title} with {artisan_name}, Address: {address}, Contact: {contact_number}, Description: {description}")
+
+    # --- Upload file to S3 ---
     try:
         s3_key = None
         if file:
             from werkzeug.utils import secure_filename
-            s3 = boto3.client("s3", region_name=REGION)
+            s3_client = boto3.client("s3", region_name=Config.REGION)
+
             filename = secure_filename(file.filename)
-            s3.upload_fileobj(file, S3_BUCKET_NAME, filename)
+
+            logger.info(f"Attempting to upload {filename} to S3 bucket {Config.S3_BUCKET_NAME}")
+
+            s3_client.upload_fileobj(file, Config.S3_BUCKET_NAME, filename)
             s3_key = filename
 
-        dynamodb = boto3.resource("dynamodb", region_name=REGION)
-        table = dynamodb.Table(DYNAMO_TABLE)
+            logger.info(f"Successfully uploaded {filename} to S3")
+
+
+        # --- Save request metadata to DynamoDB ---
+        dynamodb = boto3.resource("dynamodb", region_name=Config.REGION)
+        table = dynamodb.Table(Config.DYNAMO_NAME)
+        
+        logger.info(f"Attempting to save to DynamoDB table {Config.DYNAMO_NAME}")
+
+
         table.put_item(Item={
-            "username": user["username"],
+            "username": username,
             "request_date": datetime.now(timezone.utc).isoformat(),
             "user_email": email,
             "user_address": address,
@@ -208,44 +204,33 @@ def submit_request(user):
             "service_description": description,
             "image_s3_key": s3_key,
             "requested_service_title": service_title,
-            "requested_artisan_name": artisan_name,
+            "requested_artisan_name": artisan_name
         })
 
+        logger.info("Successfully saved to DynamoDB")
+
+
         flash("Request submitted successfully!", "success")
+        return redirect(url_for("home"))
+        
     except Exception as e:
-        print(f"Error: {e}")
-        flash("Failed to submit request.", "error")
+        
+        # CAPTURE THE ACTUAL ERROR!
+        logger.error(f"AWS Operation Failed: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        
+        # Log stack trace for better debugging
+        import traceback
+        logger.error(f"Stack trace: {traceback.format_exc()}")
+        
+        flash("Failed to submit request. Please try again.", "error")
+        return redirect(url_for("home"))
 
-    return redirect(url_for("home"))
-
-
-
-# After logout, Cognito redirects to https://www.builtbyedunoh.com/. 
-# The ALB sees no valid session cookie and immediately redirects to Cognito’s login page. User lands on Cognito sign‑in/sign‑up page, fully outside my app.
 @app.route("/logout")
 def logout():
-    cognito_logout = (
-        f"https://{COGNITO_DOMAIN}/logout"
-        f"?client_id={COGNITO_CLIENT_ID}"
-        f"&logout_uri={APP_PUBLIC_URL}/"
-    )
-    resp = redirect(cognito_logout)
-
-
-    # Delete all ALB auth cookies (the ALB may set multiple with suffixes)
-    # To get these cookie names and domain, I signed into the app, then press F12 for Developer Tools. Navigate to "cookies" and click on the drop down menu. You should see the cookie names and the domains
-    # Also confirm what cookie name is forwarded in your header via X-Amzn-Oidc-Data. You can extract and decode that using the https://www.builtbyedunoh.com/debug_headers above. 
-    # This will determine what cookie name and domain you will use. In my case, I found that it was the AWSALBAuthNonce cookie
-    domains = ["www.builtbyedunoh.com", ".builtbyedunoh.com", "builtbyedunoh.com"]
-    for cookie_name in list(request.cookies.keys()):
-        if "AWSELB" in cookie_name or "AWSALB" in cookie_name:
-            for domain in domains:
-                resp.set_cookie(cookie_name, "", expires=0, domain=domain, path="/", secure=True, httponly=True)
-                resp.delete_cookie(cookie_name, domain=domain, path="/")
-
-    return resp
-
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("landing"))
 
 if __name__ == "__main__":
     app.run(debug=True)
-

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - ArtisanConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 400px; margin: 0 auto;">
+        <div class="card">
+            <div style="text-align: left;">
+                <a href="/" class="btn btn-secondary" style="margin-bottom: 1rem; padding: 8px 16px; font-size: 14px;">
+                    ← Back to Home
+                </a>
+                
+                <h2 style="text-align: center; margin-bottom: 0.5rem; color: #333;">Sign In</h2>
+                <p style="text-align: center; margin-bottom: 2rem; color: #666;">Welcome back to ArtisanConnect</p>
+
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <p style="color: {{ 'red' if category == 'error' else 'green' }}; font-size: 14px;">
+                                {{ message }}
+                            </p>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Classic POST form -->
+                <form action="{{ url_for('login') }}" method="post">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required placeholder="Enter your username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+                    
+                    <button type="submit" class="btn" style="width: 100%; margin-bottom: 1rem;">
+                        🔑 Sign In
+                    </button>
+                </form>
+                
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <p style="color: #666; font-size: 14px;">
+                        Don't have an account? 
+                        <a href="/signup" style="color: #667eea; text-decoration: none; font-weight: 600;">Create one here</a>
+                    </p>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                    <p style="font-size: 12px; color: #666; margin-bottom: 0.5rem;">Secure authentication</p>
+                    <p style="font-size: 12px; color: #666;">Connect with trusted Nigerian artisan professionals</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

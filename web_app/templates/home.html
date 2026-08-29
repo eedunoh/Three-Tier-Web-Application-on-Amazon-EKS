@@ -152,7 +152,7 @@
             border: 1px solid #ccc;
             border-radius: 6px;
             font-size: 0.85rem;
-            margin-bottom: 20px;
+            margin-bottom: 20px; /* ⬅ More space between sections */
         }
 
         .request-form textarea {
@@ -171,25 +171,6 @@
         .request-form button:hover {
             background: #1e40af;
         }
-
-        /* Flash message styles */
-        .flash-message {
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .flash-message.error {
-            background: #feeaea;
-            color: #d32f2f;
-            border: 1px solid #f5c6cb;
-        }
-        .flash-message.success {
-            background: #eaf7ea;
-            color: #2e7d32;
-            border: 1px solid #c3e6cb;
-        }
-
         /* Mobile responsive */
         @media (max-width: 768px) {
             .main {
@@ -234,7 +215,11 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
+                            <div class="alert alert-{{ category }}" style="padding: 12px; margin-bottom: 20px; border-radius: 8px; 
+                                background: {% if category == 'error' %}#feeaea{% else %}#eaf7ea{% endif %}; 
+                                color: {% if category == 'error' %}#d32f2f{% else %}#2e7d32{% endif %}; 
+                                border: 1px solid {% if category == 'error' %}#f5c6cb{% else %}#c3e6cb{% endif %};
+                                font-size: 14px;">
                                 <i class="fas {% if category == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
                                 {{ message }}
                             </div>
@@ -248,7 +233,7 @@
                 <input type="text" name="username" value="{{ username }}" readonly>
 
                 <label>Your Email</label>
-                <input type="text" name="email" value="{{ email }}" readonly>
+                <input type="text" name="email" placeholder="Enter your email..." required>
 
                 <label>Your Address</label>
                 <input type="text" name="address" placeholder="Enter your address..." required>
@@ -325,16 +310,18 @@
         });
     </script>
     <script>
-        const requestForm = document.querySelector('.request-form form');
+    const requestForm = document.querySelector('.request-form form');
 
-        requestForm.addEventListener('submit', (e) => {
-            console.log('🚀 Submitting form to /submit_request');
+    requestForm.addEventListener('submit', (e) => {
+        // Just log the fact that it's being sent
+        console.log('🚀 Submitting form to /submit_request');
 
-            const formData = new FormData(requestForm);
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}:`, value);
-            }
-        });
-    </script>
+        // Optional: log all field values
+        const formData = new FormData(requestForm);
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
+    });
+</script>
 </body>
 </html>

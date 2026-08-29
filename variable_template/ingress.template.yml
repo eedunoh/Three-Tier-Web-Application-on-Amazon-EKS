@@ -1,3 +1,21 @@
+# In this setup, the ALB will not perform any authentication. All authentication is handled by the applications themselves – the Flask web app and Grafana.
+# The ALB simply forwards all traffic to the respective services.
+
+# Why do we choose this approach?
+# The ALB's Cognito authentication injects an X-Amzn-Oidc-Data header that is a JWT signed by the ALB's private key. AWS does not publish the public key, so Grafana cannot verify the token and rejects it.
+# While the Flask app could use that JWT (by decoding it without verification), that approach is insecure and not recommended for production.
+# By handling authentication directly in the app and in Grafana, we use standard, well‑supported OAuth 2.0 flows that are natively integrated with Cognito and fully secure.
+
+# How is the web app (/) authenticated?
+# Flask uses boto3 to authenticate users against cognito. User registration (signup) and authentication is embeded into the app. 
+# When a user visits / path, they are redirected to the app's login page. After successful login, user can then have ful access to the app and can logout he wants.
+
+# How is Grafana (/grafana) authenticated?
+# Grafana is configured with auth.generic_oauth, pointing to the same Cognito User Pool.
+# When a user visits /grafana, Grafana redirects to Cognito's login page. After login, Cognito redirects back to Grafana's callback URL (https://www.builtbyedunoh.com/grafana/login).
+# Grafana exchanges the code for tokens, creates its own session, and the user is authenticated within Grafana.
+
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 
@@ -12,24 +30,6 @@ metadata:
     # HTTPS
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
     alb.ingress.kubernetes.io/certificate-arn: ${ACM_CERTIFICATE_ARN}
-
-    # Cognito authentication
-    # Tells the AWS Load Balancer Controller: “Configure Cognito authentication on the ALB”. So the ALB, not Flask or Grafana, becomes the authentication gate.
-    alb.ingress.kubernetes.io/auth-type: cognito
-
-    # This tells the ALB which Cognito User Pool and application client to use. “ALB, use THIS Cognito User Pool, using THIS client, through THIS Cognito domain.”
-    alb.ingress.kubernetes.io/auth-idp-cognito: >
-      {
-        "userPoolARN":"${USER_POOL_ARN}",
-        "userPoolClientID":"${USER_POOL_CLIENT_ID}",
-        "userPoolDomain":"${USER_POOL_DOMAIN}"
-      }
-
-    # “If the user doesn't have a valid authentication session, send them to Cognito to log in.”
-    alb.ingress.kubernetes.io/auth-on-unauthenticated-request: authenticate
-
-    # This tells Cognito what OAuth/OIDC information the ALB should request. openid: tells Cognito this is an OpenID Connect authentication request. email: requests the user's email claim.
-    alb.ingress.kubernetes.io/auth-scope: "openid email"
 
 spec:
   ingressClassName: alb

@@ -163,6 +163,7 @@ jobs:
           echo "USER_POOL_CLIENT_ID=$(terraform output -raw user_pool_client_id)" >> "$GITHUB_OUTPUT"
           echo "USER_POOL_DOMAIN=$(terraform output -raw user_pool_domain)" >> "$GITHUB_OUTPUT"
           echo "ACM_CERTIFICATE_ARN=$(terraform output -raw acm_certificate_arn)" >> "$GITHUB_OUTPUT"
+          echo "USER_POOL_CLIENT_SECRET=$(terraform output -raw user_pool_client_secret)" >> "$GITHUB_OUTPUT"
 
 
       # Generate yaml files from its template using envsubst
@@ -174,6 +175,7 @@ jobs:
           USER_POOL_CLIENT_ID: ${{ steps.tf_outputs.outputs.USER_POOL_CLIENT_ID }}
           USER_POOL_DOMAIN: ${{ steps.tf_outputs.outputs.USER_POOL_DOMAIN }}
           ACM_CERTIFICATE_ARN: ${{ steps.tf_outputs.outputs.ACM_CERTIFICATE_ARN }}
+          USER_POOL_CLIENT_SECRET: ${{ steps.tf_outputs.outputs.USER_POOL_CLIENT_SECRET }}
 
           APP_IMAGE: ${{ env.APP_IMAGE }} 
           GRAFANA_PASSWORD: ${{ env.GRAFANA_PASSWORD }}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to ArtisanConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>ArtisanConnect</h1>
+        <p>Connect with skilled Nigerian professionals in your area</p>
+    </div>
+    
+    <div style="max-width: 400px; margin: 0 auto;">
+        <div class="card">
+            <div style="text-align: center;">
+                <h2 style="margin-bottom: 1rem; color: #333;">Get Started</h2>
+                <p style="margin-bottom: 2rem; color: #666;">Find trusted artisan companies for your needs</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <a href="/signup" class="btn" style="width: 100%;">
+                        🔧 Create Account
+                    </a>
+                    
+                    <a href="/login" class="btn btn-secondary" style="width: 100%;">
+                        🔑 Sign In
+                    </a>
+                </div>
+                
+                <div style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px;">
+                    <h3 style="color: #333; margin-bottom: 1rem; font-size: 1.1rem;">Available Services</h3>
+                    <ul style="list-style: none; color: #666; line-height: 1.8;">
+                        <li>⚡ Electrical & Electronics</li>
+                        <li>🔧 Plumbing Services</li>
+                        <li>🪵 Wood & Carpentry</li>
+                        <li>🎨 Painting Services</li>
+                        <li>❄️ HVAC Systems</li>
+                    </ul>
+                </div>
+                
+                <p style="margin-top: 1.5rem; font-size: 14px; color: #666;">
+                    Join thousands of satisfied customers across Nigeria
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

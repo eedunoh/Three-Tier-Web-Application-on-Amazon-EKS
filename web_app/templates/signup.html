@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - ArtisanConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 400px; margin: 0 auto;">
+        <div class="card">
+            <div style="text-align: left;">
+                <a href="/" class="btn btn-secondary" style="margin-bottom: 1rem; padding: 8px 16px; font-size: 14px;">
+                    ← Back to Home
+                </a>
+
+                <h2 style="text-align: center; margin-bottom: 0.5rem; color: #333;">Create Account</h2>
+                <p style="text-align: center; margin-bottom: 2rem; color: #666;">Join ArtisanConnect and find skilled professionals</p>
+
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required placeholder="your@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm your password">
+                    </div>
+
+                    <button type="submit" class="btn" style="width: 100%; margin-bottom: 1rem;">
+                        🔧 Create Account
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 1rem;">
+                    <p style="color: #666; font-size: 14px;">
+                        Already have an account? 
+                        <a href="/login" style="color: #667eea; text-decoration: none; font-weight: 600;">Sign in here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const signupForm = document.getElementById('signupForm');
+
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(signupForm);
+        const password = formData.get('password');
+        const confirmPassword = formData.get('confirm_password');
+
+        if (password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        const data = {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: password
+        };
+
+        const submitBtn = signupForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Creating account...';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = '/home';
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            alert('Something went wrong. Try again.');
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}
