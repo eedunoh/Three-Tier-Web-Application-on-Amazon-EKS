@@ -236,10 +236,12 @@ def logout():
     # To get these cookie names and domain, I signed into the app, then press F12 for Developer Tools. Navigate to "cookies" and click on the drop down menu. You should see the cookie names and the domains
     # Also confirm what cookie name is forwarded in your header via X-Amzn-Oidc-Data. You can extract and decode that using the https://www.builtbyedunoh.com/debug_headers above. 
     # This will determine what cookie name and domain you will use. In my case, I found that it was the AWSALBAuthNonce cookie
+    domains = ["www.builtbyedunoh.com", ".builtbyedunoh.com", "builtbyedunoh.com"]
     for cookie_name in list(request.cookies.keys()):
         if "AWSELB" in cookie_name or "AWSALB" in cookie_name:
-            resp.set_cookie(cookie_name, "", expires=0, domain=".builtbyedunoh.com", path="/", secure=True, httponly=True)
-            resp.delete_cookie(cookie_name, domain=".builtbyedunoh.com", path="/")
+            for domain in domains:
+                resp.set_cookie(cookie_name, "", expires=0, domain=domain, path="/", secure=True, httponly=True)
+                resp.delete_cookie(cookie_name, domain=domain, path="/")
 
     return resp
 
