@@ -118,6 +118,9 @@ grafana:
     # Optional: prevent login if role mapping fails
     role_attribute_strict: true
 
+    # Tells Grafana to immediately redirect to Cognito
+    auto_login: true
+
 
 
 prometheus:
