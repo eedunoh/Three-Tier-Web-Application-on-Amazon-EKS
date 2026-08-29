@@ -67,20 +67,38 @@ def debug_headers():
 
 
 
+# I analyzed the debug_headers and confirmed that X-Amzn-Oidc-Data is a JWT, not a base64‑encoded JSON string.
+def decode_jwt_payload(token):
+    """Decode the payload segment of a JWT without verifying signature."""
+    parts = token.split('.')
+    if len(parts) != 3:
+        return None
+    payload = parts[1]
+    # Add padding for base64url decoding
+    padding = '=' * (-len(payload) % 4)
+    try:
+        decoded = base64.urlsafe_b64decode(payload + padding)
+        return json.loads(decoded)
+    except Exception:
+        return None
+
+
+# Extract the claims: username and email
 def get_authenticated_user():
-    """Extract user info from ALB headers (ID token payload)."""
     data_header = request.headers.get("X-Amzn-Oidc-Data")
-    if data_header:
-        try:
-            claims = json.loads(base64.b64decode(data_header).decode("utf-8"))
-            return {
-                "username": claims.get("username") or claims.get("email", "unknown"),
-                "email": claims.get("email", ""),
-                # "groups": claims.get("groups", []),
-            }
-        except Exception:
-            pass
-    return None
+    if not data_header:
+        return None
+
+    claims = decode_jwt_payload(data_header)
+    if not claims:
+        return None
+
+    return {
+        "username": claims.get("username") or claims.get("email", "unknown"),
+        "email": claims.get("email", ""),
+    }
+
+
 
 # To confirm what values we have from cognito. This will be displayed in json format
 @app.route("/debug_user")
@@ -201,6 +219,7 @@ def submit_request(user):
     return redirect(url_for("home"))
 
 
+
 # After logout, Cognito redirects to https://www.builtbyedunoh.com/. 
 # The ALB sees no valid session cookie and immediately redirects to Cognito’s login page. User lands on Cognito sign‑in/sign‑up page, fully outside my app.
 @app.route("/logout")
@@ -214,19 +233,17 @@ def logout():
 
 
     # Delete all ALB auth cookies (the ALB may set multiple with suffixes)
-    # To get these cookie names and domain, I signed into the app, then press F12 for Developer Tools. Navigate to "cookies" and click on the drop down menu. You should
+    # To get these cookie names and domain, I signed into the app, then press F12 for Developer Tools. Navigate to "cookies" and click on the drop down menu. You should see the cookie names and the domains
+    # Also confirm what cookie name is forwarded in your header via X-Amzn-Oidc-Data. You can extract and decode that using the https://www.builtbyedunoh.com/debug_headers above. 
+    # This will determine what cookie name and domain you will use. In my case, I found that it was the AWSALBAuthNonce cookie
     for cookie_name in list(request.cookies.keys()):
         if "AWSELB" in cookie_name or "AWSALB" in cookie_name:
-            # Try both possible domains. Change if you saw a different one in DevTools
-            resp.set_cookie(cookie_name, "", expires=0, domain="www.builtbyedunoh.com", path="/", secure=True, httponly=True)
             resp.set_cookie(cookie_name, "", expires=0, domain=".builtbyedunoh.com", path="/", secure=True, httponly=True)
+            resp.delete_cookie(cookie_name, domain=".builtbyedunoh.com", path="/")
 
     return resp
 
 
-
 if __name__ == "__main__":
     app.run(debug=True)
-
-
 
