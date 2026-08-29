@@ -76,12 +76,17 @@ def get_authenticated_user():
             return {
                 "username": claims.get("username") or claims.get("email", "unknown"),
                 "email": claims.get("email", ""),
-                "groups": claims.get("groups", []),
+                # "groups": claims.get("groups", []),
             }
         except Exception:
             pass
     return None
 
+# To confirm what values we have from cognito. This will be displayed in json format
+@app.route("/debug_user")
+def debug_user():
+    user = get_authenticated_user()
+    return jsonify(user)
 
 
 def login_required(f):
@@ -146,7 +151,7 @@ def home(user):
         username=username,
         email=email,
         artisans=artisans,
-        category_counts=category_counts,
+        category_counts=category_counts
     )
 
 
@@ -207,15 +212,21 @@ def logout():
     )
     resp = redirect(cognito_logout)
 
-    # That line deletes the ALB authentication session cookie for "www.builtbyedunoh.com/" from the user’s browser
-    resp.delete_cookie(
-        "AWSELBAuthSessionCookie",
-        domain=".builtbyedunoh.com",
-        path="/"
-    )
-    
+
+    # Delete all ALB auth cookies (the ALB may set multiple with suffixes)
+    # To get these cookie names and domain, I signed into the app, then press F12 for Developer Tools. Navigate to "cookies" and click on the drop down menu. You should
+    for cookie_name in list(request.cookies.keys()):
+        if "AWSELB" in cookie_name or "AWSALB" in cookie_name:
+            # Try both possible domains. Change if you saw a different one in DevTools
+            resp.set_cookie(cookie_name, "", expires=0, domain="www.builtbyedunoh.com", path="/", secure=True, httponly=True)
+            resp.set_cookie(cookie_name, "", expires=0, domain=".builtbyedunoh.com", path="/", secure=True, httponly=True)
+
     return resp
+
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
