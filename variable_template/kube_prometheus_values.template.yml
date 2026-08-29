@@ -64,6 +64,7 @@ grafana:
 
 
   # Authenticate Grafana user using AWS Cognito
+  # https://archive.grafana.com/docs/grafana/v12.3/setup-grafana/configure-access/configure-authentication/generic-oauth/#configure-team-synchronization#2
   auth.generic_oauth:
 
     # Enables the Generic OAuth authentication module in Grafana
