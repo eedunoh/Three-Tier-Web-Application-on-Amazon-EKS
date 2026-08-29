@@ -73,9 +73,9 @@ grafana:
 
       auto_sign_up: true
 
-      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_yeS9cglNs/.well-known/jwks.json"
+      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_pYS0NRyXj/.well-known/jwks.json"
 
-      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_yeS9cglNs"
+      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_pYS0NRyXj"
 
       role_attribute_path: ""
       

@@ -20,8 +20,8 @@ metadata:
     # This tells the ALB which Cognito User Pool and application client to use. “ALB, use THIS Cognito User Pool, using THIS client, through THIS Cognito domain.”
     alb.ingress.kubernetes.io/auth-idp-cognito: >
       {
-        "userPoolARN":"arn:aws:cognito-idp:eu-north-1:337909745504:userpool/eu-north-1_yeS9cglNs",
-        "userPoolClientID":"4bqitb99cav5dqesjujvqo6ah2",
+        "userPoolARN":"arn:aws:cognito-idp:eu-north-1:337909745504:userpool/eu-north-1_pYS0NRyXj",
+        "userPoolClientID":"72tl2gq9ul0gjoui6tnq9pf8rr",
         "userPoolDomain":"eks-app"
       }
 

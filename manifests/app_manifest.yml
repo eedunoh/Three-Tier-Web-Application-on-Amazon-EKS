@@ -28,7 +28,7 @@ spec:
         
       containers:
       - name: my-webapp
-        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:56ca5252b39165aa91267ef912196adbda164666"
+        image: "337909745504.dkr.ecr.eu-north-1.amazonaws.com/eks_app:e54bbd7d7fbd01f7be26fcb0e3488c46b319e26a"
         ports:
         - containerPort: 80
 
