@@ -62,24 +62,62 @@ grafana:
       # Set to "true" if you want to use single sign-on. Else imput "false"
       disable_login_form: true
 
-    auth.jwt:
-      enabled: true
 
-      header_name: X-Amzn-Oidc-Data
+  # Authenticate Grafana user using AWS Cognito
+  # https://archive.grafana.com/docs/grafana/v12.3/setup-grafana/configure-access/configure-authentication/generic-oauth/#configure-team-synchronization#2
+  auth.generic_oauth:
 
-      # These claims exist in the Cognito data token
-      username_claim: username
-      email_claim: email
+    # Enables the Generic OAuth authentication module in Grafana
+    enabled: true
 
-      auto_sign_up: true
+    # Display name for the login button (shown on Grafana's login page)
+    name: Cognito
 
-      jwk_set_url: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_pYS0NRyXj/.well-known/jwks.json"
+    # Cognito App Client ID (used to identify Grafana to Cognito)
+    client_id: 72tl2gq9ul0gjoui6tnq9pf8rr
 
-      expected_issuer: "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_pYS0NRyXj"
+    # Cognito App Client Secret (used to authenticate Grafana's token exchange requests)
+    client_secret: 1paon99spvujn45kergqfevf07pbdh9eik2q12fv89vf80acnadp
 
-      role_attribute_path: ""
-      
-      role_attribute_strict: false
+    # OAuth scopes requested; 'openid' is required for the ID token, 'email' and 'profile' provide user attributes
+    scopes: openid email profile
+
+    # Cognito endpoint for the Authorization Code Flow (redirects users to the login page)
+    auth_url: https://eks-app.auth.eu-north-1.amazoncognito.com/oauth2/authorize
+
+    # Cognito endpoint Grafana calls internally to exchange the 'code' for access/ID tokens
+    token_url: https://eks-app.auth.eu-north-1.amazoncognito.com/oauth2/token
+
+    # Cognito endpoint Grafana calls to get user profile details (email, name) using the access token
+    api_url: https://eks-app.auth.eu-north-1.amazoncognito.com/oauth2/userInfo
+
+    # Allow new users from Cognito to auto-create accounts in Grafana on first login (vs. manual creation)
+    allow_sign_up: true
+
+    # Specifies which JSON field in the token/userInfo contains the user's email
+    email_attribute_name: email
+
+    # Tells Grafana which attribute to use as the user's login/username (Grafana will use the email to match accounts)
+    login_attribute_path: email
+
+    # Tells Grafana which attribute to use for the user's display name in the UI
+    name_attribute_path: username
+
+
+    # Cognito includes group membership as the cognito:groups claim in the ID and access tokens. Grafana’s Generic OAuth integration supports group‑based restrictions with two configuration options:
+    # 1. groups_attribute_path: Tells Grafana where to find the groups in the OAuth response
+    # 2. allowed_groups: List of groups whose members are allowed to log in
+
+    # I want ONLY users in the admin group to access the app:
+    # Tell Grafana the groups are in the "cognito:groups" claim
+    groups_attribute_path: "cognito:groups"
+    
+    # Only allow users in the "admin" group (replace with your group name)
+    allowed_groups: "admin"
+    
+    # Optional: prevent login if role mapping fails
+    role_attribute_strict: true
+
 
 
 prometheus:
