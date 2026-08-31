@@ -50,10 +50,7 @@ grafana:
     role: general_and_monitoring                              
   grafana.ini:
     server:
-
-      # This is Grafana's public URL. It is the standard Grafana pattern when Grafana is served under a sub-path. Grafana needs to know that users reach it at /grafana, rather than at /. 
-      # The %(... )s parts are Grafana variables that Grafana substitutes at runtime. So conceptually: http://builtbyedunoh.com:80/grafana
-      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"     
+      root_url: "https://www.builtbyedunoh.com/grafana"
 
       # serve_from_sub_path: true tells Grafana to actually serve its application from /grafana. It is required for /grafana path because I'm putting Grafana behind my domain: http://builtbyedunoh.com/grafana
       serve_from_sub_path: true
@@ -61,6 +58,9 @@ grafana:
     auth:
       # Set to "true" if you want to use single sign-on. Else imput "false"
       disable_login_form: true
+
+      # It only adds a redirect. Instead of rendering the empty HTML page, Grafana sends an HTTP 302 Redirect to Cognito. The login flow then proceeds normally.
+      auto_login: true
 
 
   # Authenticate Grafana user using AWS Cognito
