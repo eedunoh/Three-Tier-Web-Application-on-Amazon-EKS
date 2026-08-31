@@ -104,23 +104,6 @@ resource "aws_cognito_user_pool_domain" "my_domain" {
 }
 
 
-# Cognito supports adding/removing users from groups.
-# If you create a Cognito user and do nothing else, the user is simply in no Cognito group. Groups are not automatically assigned. 
-# You need to explicitly add the user to a roup, e.g. through a post-confirmation Lambda or your application/admin process.
-resource "aws_cognito_user_group" "admin" {
-  name         = "admin"
-  user_pool_id = aws_cognito_user_pool.my_user_pool.id
-  description  = "Application administrators"
-}
-
-resource "aws_cognito_user_group" "users" {
-  name         = "users"
-  user_pool_id = aws_cognito_user_pool.my_user_pool.id
-  description  = "Regular application users"
-}
-
-
-
 
 # UserPool Client is the application that connects to the userpool database.
 resource "aws_cognito_user_pool_client" "my_user_pool_client" {
