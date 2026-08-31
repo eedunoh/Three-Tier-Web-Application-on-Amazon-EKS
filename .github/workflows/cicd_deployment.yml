@@ -182,9 +182,9 @@ jobs:
 
         # No need to cd into gitops; we are already at repo root
         run: |
-          envsubst < variable_template/app_manifest.template.yml > manifests/app_manifest.yml
-          envsubst < variable_template/ingress.template.yml > manifests/ingress.yml
-          envsubst < variable_template/kube_prometheus_values.template.yml > monitoring/kube_prometheus_values.yml
+          envsubst < yaml_templates/app_manifest.template.yml > manifests/app_manifest.yml
+          envsubst < yaml_templates/ingress.template.yml > manifests/ingress.yml
+          envsubst < yaml_templates/kube_prometheus_values.template.yml > monitoring/kube_prometheus_values.yml
 
 
 

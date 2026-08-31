@@ -19,19 +19,19 @@ variable "vpc_cidr" {
 }
 
 variable "az_count" {
-  default     = 2
+  default     = 3
   description = "count of availabily zones in the region"
   type        = number
 }
 
 variable "public_subnet_cidr" {
-  default     = ["10.0.1.0/24", "10.0.3.0/24"]
+  default     = ["10.0.1.0/24", "10.0.3.0/24", "10.0.5.0/24"]
   description = "list of all public subnet CIDR blocks"
   type        = list(string)
 }
 
 variable "private_subnet_cidr" {
-  default     = ["10.0.2.0/24", "10.0.4.0/24"]
+  default     = ["10.0.2.0/24", "10.0.4.0/24", "10.0.6.0/24"]
   description = "list of all private subnet CIDR blocks"
   type        = list(string)
 }
@@ -43,7 +43,7 @@ variable "route_table_cidr" {
 }
 
 variable "availability_zone" {
-  default = ["eu-north-1a", "eu-north-1b"]
+  default = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 }
 
 
