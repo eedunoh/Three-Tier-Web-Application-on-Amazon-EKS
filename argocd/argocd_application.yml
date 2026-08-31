@@ -51,5 +51,21 @@ spec:
       prune: true
       selfHeal: true
 
+      # I encountered an issue where the Prometheus and Alertmanager monitoring tools were missing because their Custom Resource Definitions (CRDs) are too large for ArgoCD's default installation method. 
+      # When ArgoCD installs applications, it tries to create a hidden backup copy of the entire CRD schema inside a tiny text slot in Kubernetes. 
+      # However, the Prometheus CRD files are massive, and trying to force them into this tiny slot instantly triggers a Kubernetes safety limit that blocks anything larger than 262,144 bytes. 
+      # Because of this block, the installation gets stuck halfway, leaving the monitoring "brain" unable to start up or create the rest of the tools.
+
+      # The recommended solution is to add specific configuration options to the ArgoCD application settings to safely bypass this limit and handle the deployment cleanly:
+      # 1. CreateNamespace=true: This tells ArgoCD to automatically create the destination namespace in the Kubernetes cluster if it doesn't already exist before trying to deploy any resources into it.
+      
+      # 2. SkipDryRunOnMissingResource=true: Before deploying, ArgoCD normally runs a "dry-run" pre-check against Kubernetes to ensure all resource types are recognized. This option tells ArgoCD to skip that pre-check for custom resources (like Prometheus or Alertmanager CRDs), preventing the installation from immediately failing if their definitions aren't fully registered in the cluster yet.
+      
+      # 3. ServerSideApply=true: This shifts the deployment tracking responsibility from the local ArgoCD client directly to the Kubernetes API server control plane. 
+      # It completely stops ArgoCD from writing massive CRD tracking data into a tiny metadata text slot (kubectl.kubernetes.io/last-applied-configuration), effortlessly bypassing the strict 262,144-byte size limit that was previously breaking my deployment.
+    syncOptions:
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
+      - ServerSideApply=true
 
 

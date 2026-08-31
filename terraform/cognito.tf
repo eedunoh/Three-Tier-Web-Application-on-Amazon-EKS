@@ -153,7 +153,9 @@ resource "aws_cognito_user_pool_client" "my_user_pool_client" {
   supported_identity_providers = ["COGNITO"]
 
   # The callback URL is the return address Cognito uses after authentication. Its where Cognito redirects users and delivers OAuth tokens after any successful login. 
-  # The OAuth 2.0 Authorization Code Flow (which Grafana uses) requires a callback URL. Without it, Cognito wouldn't know where to send the user after they successfully log in.
+  # I encountered an error when trying to login into grafana. There was a redirect mismatch. The redirect_uri that Grafana was sending to Cognito did not match any URL in Cognito's Allowed callback URLs list.
+  # Opened Developer Tools (F12 → Network tab) and visited/refreshed the browser; https://www.builtbyedunoh.com/grafana. Found the redirect request to Cognito and copied the accurate redirect_uri from the request URL.
+  # Pasted the exact redirect uri in the callback_urls here and the login flow then redirected to Cognito successfully.
   callback_urls = [
     "https://www.builtbyedunoh.com/grafana/login",
     "https://www.builtbyedunoh.com/grafana/login/generic_oauth"

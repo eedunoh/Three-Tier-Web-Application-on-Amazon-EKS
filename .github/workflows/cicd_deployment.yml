@@ -227,8 +227,9 @@ jobs:
 
       # Install Argo CD into the EKS cluster.
 
-      # ApplicationSet is an Argo CD component that generates multiple Applications from templates (e.g., for multi-cluster deployments). I'll disable it because I'm using a single static EKS cluster with manually defined Applications.
-      # It also caused the "metadata.annotations: Too long" error during kubectl apply due to its large CRD. I encountered this error hence this change.
+      # An ApplicationSet is an advanced feature used to automatically generate and manage multiple ArgoCD Applications at the same time (for example, if you wanted to deploy the same app across 50 different Kubernetes clusters simultaneously using a single template).
+      # I disabled this because this project uses a single static EKS cluster with manually defined Applications and does not need dynamic generation.
+      # Disabling this also saves valuable cluster CPU and memory resources by preventing unnecessary controller pods from running.
 
       # I encountred an error where Argo CD was already installed from a previous pipeline run, so re-running helm install in the CI/CD pipeline failed with “cannot re-use a name that is still in use” — even when the pipeline run was just updating the application, not needing to reinstall Argo CD.
       # The solution is to eplace helm install with helm upgrade --install to make the step idempotent: it installs Argo CD if missing, or upgrades it if already present, avoiding the name conflict and allowing the pipeline to run cleanly on every execution.
