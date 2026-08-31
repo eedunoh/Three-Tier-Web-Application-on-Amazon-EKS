@@ -155,7 +155,8 @@ resource "aws_cognito_user_pool_client" "my_user_pool_client" {
   # The callback URL is the return address Cognito uses after authentication. Its where Cognito redirects users and delivers OAuth tokens after any successful login. 
   # The OAuth 2.0 Authorization Code Flow (which Grafana uses) requires a callback URL. Without it, Cognito wouldn't know where to send the user after they successfully log in.
   callback_urls = [
-    "https://www.builtbyedunoh.com/grafana/login"
+    "https://www.builtbyedunoh.com/grafana/login",
+    "https://www.builtbyedunoh.com/grafana/login/generic_oauth"
   ]
   
 }

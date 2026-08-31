@@ -89,9 +89,9 @@ def signup():
                 return redirect(url_for("login"))
         else:
             if request.is_json:
-                return jsonify({'success': False, 'message': 'Signup failed. User may already exist.'}), 400
+                return jsonify({'success': False, 'message': 'Signup failed. Check Password length to be sure it meets the standard or User may already exist.'}), 400
             else:
-                flash("Signup failed. User may already exist.", "error")
+                flash("Signup failed. Check Password length to be sure it meets the standard or User may already exist..", "error")
     
     return render_template("signup.html")
 
