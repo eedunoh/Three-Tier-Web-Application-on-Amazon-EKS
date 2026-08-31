@@ -50,10 +50,7 @@ grafana:
     role: general_and_monitoring                              
   grafana.ini:
     server:
-
-      # This is Grafana's public URL. It is the standard Grafana pattern when Grafana is served under a sub-path. Grafana needs to know that users reach it at /grafana, rather than at /. 
-      # The %(... )s parts are Grafana variables that Grafana substitutes at runtime. So conceptually: http://builtbyedunoh.com:80/grafana
-      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"     
+      root_url: "https://www.builtbyedunoh.com/grafana"
 
       # serve_from_sub_path: true tells Grafana to actually serve its application from /grafana. It is required for /grafana path because I'm putting Grafana behind my domain: http://builtbyedunoh.com/grafana
       serve_from_sub_path: true
@@ -61,6 +58,9 @@ grafana:
     auth:
       # Set to "true" if you want to use single sign-on. Else imput "false"
       disable_login_form: true
+
+      # It only adds a redirect. Instead of rendering the empty HTML page, Grafana sends an HTTP 302 Redirect to Cognito. The login flow then proceeds normally.
+      auto_login: true
 
 
   # Authenticate Grafana user using AWS Cognito
@@ -74,10 +74,10 @@ grafana:
     name: Cognito
 
     # Cognito App Client ID (used to identify Grafana to Cognito)
-    client_id: 72tl2gq9ul0gjoui6tnq9pf8rr
+    client_id: 2plb6stg7hcljaajvbkil0uakq
 
     # Cognito App Client Secret (used to authenticate Grafana's token exchange requests)
-    client_secret: 1paon99spvujn45kergqfevf07pbdh9eik2q12fv89vf80acnadp
+    client_secret: 1nuosd79c35h893k6g2hoepmmvuakujeejjhrck0gru5cp5gtsi5
 
     # OAuth scopes requested; 'openid' is required for the ID token, 'email' and 'profile' provide user attributes
     scopes: openid email profile
