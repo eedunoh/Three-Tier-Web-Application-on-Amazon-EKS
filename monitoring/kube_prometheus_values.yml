@@ -15,7 +15,9 @@
 
 grafana:
 
-  assertNoLeakedSecrets: false
+  # Sets Grafana admin login password
+  # adminPassword: "ThisIsATestPassword654@"      
+  # username: "admin"
   
   service:
 
