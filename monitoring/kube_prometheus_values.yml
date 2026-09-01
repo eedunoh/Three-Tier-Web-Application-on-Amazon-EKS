@@ -74,10 +74,10 @@ grafana:
       name: Cognito
 
       # Cognito App Client ID (used to identify Grafana to Cognito)
-      client_id: 2plb6stg7hcljaajvbkil0uakq
+      client_id: 5vv8e16reueqkrnesckk4768s4
 
       # Cognito App Client Secret (used to authenticate Grafana's token exchange requests)
-      client_secret: 1nuosd79c35h893k6g2hoepmmvuakujeejjhrck0gru5cp5gtsi5
+      client_secret: 1f4enmsnph1fm6q3rihcbd2eggdh0ecc165qbsm78oeut6i4ujdn
 
       # OAuth scopes requested; 'openid' is required for the ID token and 'email'
       scopes: openid email
