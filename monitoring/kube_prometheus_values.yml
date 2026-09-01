@@ -14,10 +14,7 @@
 # This is different from my app, because I explicitly created a service manifest and named it. So the argoCD application cant overwrite that.
 
 grafana:
-
-  # Sets Grafana admin login password
-  # adminPassword: "ThisIsATestPassword654@"      
-  # username: "admin"
+  assertNoLeakedSecrets: false
   
   service:
 
@@ -74,10 +71,10 @@ grafana:
       name: Cognito
 
       # Cognito App Client ID (used to identify Grafana to Cognito)
-      client_id: 3hu5tqpviu84dovkeqr3i8mj5e
+      client_id: 4tn9n35a51qvvqelivrn0ivvp5
 
       # Cognito App Client Secret (used to authenticate Grafana's token exchange requests)
-      client_secret: 1m3ohmspbuoem9quefugf6fft4r7tgip8k4nadsdvggcns7kovo8
+      client_secret: vf8rpdg2ltsluisep9dqio9870rus1i314g7ne16a1uht2tkmn2
 
       # OAuth scopes requested; 'openid' is required for the ID token and 'email'
       scopes: openid email
