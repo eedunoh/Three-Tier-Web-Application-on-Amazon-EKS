@@ -14,10 +14,7 @@
 # This is different from my app, because I explicitly created a service manifest and named it. So the argoCD application cant overwrite that.
 
 grafana:
-
-  # Sets Grafana admin login password
-  # adminPassword: "${GRAFANA_PASSWORD}"      
-  # username: "admin"
+  assertNoLeakedSecrets: false
   
   service:
 
